@@ -16,7 +16,9 @@ bool isValidIPv4(const std::string& ip) {
     return std::regex_match(ip, ipv4Regex);
 }
 
-/// Reads file and runs isValidIPv4 through each line
+
+
+// Reads file and runs isValidIPv4 through each line
 void processFile(const std::string& fileName){
     std::ifstream infile(fileName);
     std::string ip;
@@ -28,8 +30,12 @@ void processFile(const std::string& fileName){
 
     std::string line;
     while(std::getline(infile, line)){
+          
         if(isValidIPv4(line)){
             std::cout << line << "+" << std::endl; 
+        }
+        else{
+            std::cout << line <<"-" <<std::endl;
         }
     }
 
@@ -39,7 +45,7 @@ void processFile(const std::string& fileName){
 
 // Main function to test the isValidIPv4 function
 int main() {
-    std::string filename = "sample-D-input.txt";
+    std::string filename = "sample-input.txt";
     processFile(filename);  // Call function to process file
     return 0;
 }

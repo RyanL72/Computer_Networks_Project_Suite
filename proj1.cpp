@@ -16,27 +16,30 @@ bool isValidIPv4(const std::string& ip) {
     return std::regex_match(ip, ipv4Regex);
 }
 
-// Main function to test the isValidIPv4 function
-int main() {
-    // Array of test IP addresses
-    std::string testIPs[] = {
-        "192.168.1.1",    // Valid
-        "255.255.255.0",  // Valid
-        "127.0.0.1",      // Valid
-        "256.256.256.256",// Invalid (out of range)
-        "192.168.1",      // Invalid (missing octet)
-        "192.168.1.999",  // Invalid (octet out of range)
-        "abc.def.ghi.jkl" // Invalid (not a number)
-    };
+/// Reads file and runs isValidIPv4 through each line
+void processFile(const std::string& fileName){
+    std::ifstream infile(fileName);
+    std::string ip;
 
-    // Loop through the array and check each IP address
-    for (const std::string& ip : testIPs) {
-        if (isValidIPv4(ip)) {
-            std::cout << ip << "+" << std::endl;
-        } else {
-            std::cout << ip << "-" << std::endl;
+    if(!infile){
+        std::cerr << "Error: no file found " << fileName << std::endl;
+        return;
+    }
+
+    std::string line;
+    while(std::getline(infile, line)){
+        if(isValidIPv4(line)){
+            std::cout << line << "+" << std::endl; 
         }
     }
 
+    infile.close();
+    
+}
+
+// Main function to test the isValidIPv4 function
+int main() {
+    std::string filename = "sample-D-input.txt";
+    processFile(filename);  // Call function to process file
     return 0;
 }

@@ -8,12 +8,47 @@
 
 // Checks to see if a given IPv4 address is valid or not
 bool isValidIPv4(const std::string& ip) {
-    // regex object asks if there will be a octet that is (250-255, 200-249, 100-199, 0-99)
-    std::regex ipv4Regex(R"(^(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9][0-9]?|0)\.(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9][0-9]?|0)\.(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9][0-9]?|0)\.(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9][0-9]?|0)$)");
+    int num = 0; 
+    int dotCount = 0; 
+    int segmentLength = 0; 
     
+    for (std::string::size_type i = 0; i < ip.size(); ++i) {
+        char ch = ip[i];
+        
+        if (ch == '.') {
+            // Invalid if no digits before dot or number is out of range
+            if (segmentLength == 0 || num < 0 || num > 255) {
+                return false;
+            }
+            
+            // Check for leading zeroes 
+            if (segmentLength > 1 && ip[i - segmentLength] == '0') {
+                return false;
+            }
+            
+            dotCount++; 
+            num = 0; 
+            segmentLength = 0; 
+        }
+        else if (isdigit(ch)) {
+            num = num * 10 + (ch - '0');
+            segmentLength++; 
+        }
+        else {
+            return false;
+        }
+    }
+    
+    // Final segment validation 
+    if (segmentLength == 0 || num < 0 || num > 255) {
+        return false;
+    }
+    if (segmentLength > 1 && ip[ip.size() - segmentLength] == '0') {
+        return false;
+    }
 
-
-    return std::regex_match(ip, ipv4Regex);
+    // Check that there are exactly 3 dots so that there are 4 segments
+    return dotCount == 3;
 }
 
 

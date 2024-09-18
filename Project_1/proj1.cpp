@@ -5,42 +5,51 @@
 #include <vector>
 #include <cstdlib>
 
+// Define constants
+const int IPV4_SEGMENT_MIN = 0;
+const int IPV4_SEGMENT_MAX = 255;
+const int IPV4_DOT_COUNT = 3;
+
+// Define Functions
+bool isValidIPv4(const std::string& ip);
+void processFile(const std::string& fileName);
+void processFileListMode(const std::string& fileName);
+void processFileSummaryMode(const std::string& fileName);
+int main(int argc, char* argv[]);
 
 // Checks to see if a given IPv4 address is valid or not
 bool isValidIPv4(const std::string& ip) {
-    int num = 0; 
-    int dotCount = 0; 
-    int segmentLength = 0; 
-    
+    int num = 0;
+    int dotCount = 0;
+    int segmentLength = 0;
+
     for (std::string::size_type i = 0; i < ip.size(); ++i) {
         char ch = ip[i];
-        
+
         if (ch == '.') {
             // Invalid if no digits before dot or number is out of range
-            if (segmentLength == 0 || num < 0 || num > 255) {
+            if (segmentLength == 0 || num < IPV4_SEGMENT_MIN || num > IPV4_SEGMENT_MAX) {
                 return false;
             }
-            
-            // Check for leading zeroes 
+
+            // Check for leading zeroes
             if (segmentLength > 1 && ip[i - segmentLength] == '0') {
                 return false;
             }
-            
-            dotCount++; 
-            num = 0; 
-            segmentLength = 0; 
-        }
-        else if (isdigit(ch)) {
+
+            dotCount++;
+            num = 0;
+            segmentLength = 0;
+        } else if (isdigit(ch)) {
             num = num * 10 + (ch - '0');
-            segmentLength++; 
-        }
-        else {
+            segmentLength++;
+        } else {
             return false;
         }
     }
-    
-    // Final segment validation 
-    if (segmentLength == 0 || num < 0 || num > 255) {
+
+    // Final segment validation
+    if (segmentLength == 0 || num < IPV4_SEGMENT_MIN || num > IPV4_SEGMENT_MAX) {
         return false;
     }
     if (segmentLength > 1 && ip[ip.size() - segmentLength] == '0') {
@@ -48,38 +57,33 @@ bool isValidIPv4(const std::string& ip) {
     }
 
     // Check that there are exactly 3 dots so that there are 4 segments
-    return dotCount == 3;
+    return dotCount == IPV4_DOT_COUNT;
 }
 
-
-
 // Reads file and runs isValidIPv4 through each line
-void processFile(const std::string& fileName){
+void processFile(const std::string& fileName) {
     std::ifstream infile(fileName);
     std::string ip;
 
-    if(!infile){
+    if (!infile) {
         std::cerr << "Error: no file found " << fileName << std::endl;
         return;
     }
 
     std::string line;
-    while(std::getline(infile, line)){
-          
-        if(isValidIPv4(line)){
-            std::cout << line << "+" << std::endl; 
-        }
-        else{
-            std::cout << line <<"-" <<std::endl;
+    while (std::getline(infile, line)) {
+        if (isValidIPv4(line)) {
+            std::cout << line << " +" << std::endl;
+        } else {
+            std::cout << line << " -" << std::endl;
         }
     }
 
     infile.close();
-    
 }
 
 // Processes the file in list mode
-void processFileListMode(const std::string& fileName){
+void processFileListMode(const std::string& fileName) {
     std::ifstream infile(fileName);
     std::string line;
 
@@ -106,7 +110,7 @@ void processFileSummaryMode(const std::string& fileName) {
     int totalLines = 0, validCount = 0, invalidCount = 0;
 
     if (!infile) {
-        std::cerr << "Error: no file found :" << fileName << std::endl;
+        std::cerr << "Error: no file found: " << fileName << std::endl;
         return;
     }
 
@@ -127,7 +131,7 @@ void processFileSummaryMode(const std::string& fileName) {
     std::cout << "INVALID: " << invalidCount << std::endl;
 }
 
-// Main function to handle arguments 
+// Main function to handle arguments
 int main(int argc, char* argv[]) {
     bool listMode = false;
     bool summaryMode = false;
@@ -151,7 +155,7 @@ int main(int argc, char* argv[]) {
             summaryMode = true;
         } else if (arg == "-f") {
             if (i + 1 < argc) {
-                fileName = argv[++i];  // Get the next argument 
+                fileName = argv[++i];  // Get the next argument
             } else {
                 std::cerr << "Error: -f must be followed by a filename" << std::endl;
                 return 1;

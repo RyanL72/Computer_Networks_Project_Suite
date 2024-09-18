@@ -10,7 +10,7 @@ const int IPV4_SEGMENT_MIN = 0;
 const int IPV4_SEGMENT_MAX = 255;
 const int IPV4_DOT_COUNT = 3;
 
-// Define Functions
+// Define Functions 
 bool isValidIPv4(const std::string& ip);
 void processFile(const std::string& fileName);
 void processFileListMode(const std::string& fileName);

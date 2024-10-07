@@ -1,12 +1,14 @@
-
 CFLAGS=-g -Wall -Werror
+TARGET=proj2
 
-TARGETS=sockets #socketsd
+all: $(TARGET)
 
-all: $(TARGETS)
+$(TARGET): proj2.cpp
+	$(CXX) $(CFLAGS) -o $(TARGET) proj2.cpp
 
 clean:
-	rm -f $(TARGETS) 
+	rm -f $(TARGET)
 	rm -rf *.dSYM
 
 distclean: clean
+

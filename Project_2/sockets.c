@@ -1,4 +1,3 @@
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <strings.h>
@@ -29,11 +28,22 @@ int errexit (char *format, char *arg)
 }
 
 int main (int argc, char *argv [])
-{
+{   
+    //structure used to specify the address for this socket.
     struct sockaddr_in sin;
+
+    //structure that holds information about a host 
     struct hostent *hinfo;
+
+    //structure containing information about a protocal
     struct protoent *protoinfo;
+
+    //store data being sent or received over the network
+    //BUFLEN is typically defined elsewhere and represents the maximum size of the data 
     char buffer [BUFLEN];
+
+    //sd socket descriptor, an integer value returned by the socket() representing the unique identifier for a socket connection
+    //ret variable used to store return values from various socket functions. It is typically used to check for success or error codes
     int sd, ret;
 
     if (argc != REQUIRED_ARGC)
@@ -47,6 +57,7 @@ int main (int argc, char *argv [])
     /* set endpoint information */
     memset ((char *)&sin, 0x0, sizeof (sin));
     sin.sin_family = AF_INET;
+    //host to netoworks hton
     sin.sin_port = htons (atoi (argv [PORT_POS]));
     memcpy ((char *)&sin.sin_addr,hinfo->h_addr,hinfo->h_length);
 

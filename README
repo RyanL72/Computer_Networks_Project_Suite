@@ -1,0 +1,4 @@
+to run tests
+
+chmod +x test_proj2.sh   
+./test_proj2.sh

@@ -15,6 +15,9 @@ Description: Web Client
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <ctype.h>
+#include <iostream>
+#include <cstring>
+#include <cstdio>
 
 #define ERROR 1
 #define REQUIRED_ARGC 3
@@ -198,7 +201,13 @@ int main (int argc, char *argv [])
         char *header_end = strstr(buffer, "\r\n\r\n");  // Find the end of the headers
         if (header_end) {
             *header_end = '\0';  // Null-terminate the header section
-            printf("RSP: %s\n", buffer);  // Print the response headers
+
+            // Print each line with "RSP: " prefix
+            char *line = strtok(buffer, "\r\n");
+            while (line != nullptr) {
+                std::cout << "RSP: " << line << std::endl;
+                line = strtok(nullptr, "\r\n");
+            }
         }
     } else if (strstr(buffer, "200 OK")) {  // Check if the response contains a "200 OK" status code
         char *header_end = strstr(buffer, "\r\n\r\n");  // Find the end of the headers
@@ -206,14 +215,19 @@ int main (int argc, char *argv [])
             // Write the body content to the file specified by the -w option
             FILE *file = fopen(filename, "w");
             if (file) {
-                fprintf(file, "%s", header_end + 4);  // Write the body content to the file
+                // Add "RSP: " prefix to each line in the body content before writing to the file
+                char *body_line = strtok(header_end + 4, "\r\n");
+                while (body_line != nullptr) {
+                    fprintf(file, "RSP: %s\n", body_line);
+                    body_line = strtok(nullptr, "\r\n");
+                }
                 fclose(file);
             } else {
-                fprintf(stderr, "Error: Unable to write content to file: %s\n", filename);
+                std::cerr << "Error: Unable to write content to file: " << filename << std::endl;
             }
         }
     } else {
-        fprintf(stderr, "Error: Server returned a non-200 status code.\n");
+        std::cerr << "Error: Server returned a non-200 status code." << std::endl;
     }
             
     /* close & exit */

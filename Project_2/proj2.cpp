@@ -37,10 +37,11 @@ void usage(const char *progname, const char *error_message) {
     exit(ERROR);
 }
 
-int errexit(const char *format, const char *arg) {
-    fprintf(stderr, format, arg);
-    fprintf(stderr, "\n");
-    exit(ERROR);
+int errexit (const char *format, const char *arg)
+{
+    fprintf (stderr,format,arg);
+    fprintf (stderr,"\n");
+    exit (ERROR);
 }
 
 // Function to parse the URL and extract the hostname and path
@@ -72,7 +73,8 @@ void parse_url(const char *url, char *hostname, char *path) {
     }
 }
 
-int main(int argc, char *argv[]) {   
+int main (int argc, char *argv [])
+{   
     // Structure used to specify the address for this socket
     struct sockaddr_in sin;
     struct hostent *hinfo;
@@ -89,8 +91,8 @@ int main(int argc, char *argv[]) {
 
     // Command-line argument parsing
     int opt;
-    while ((opt = getopt(argc, argv, "iu:qaw:")) != -1) {
-        switch (opt) {
+    while((opt = getopt(argc, argv, "iu:qaw:")) != -1){
+        switch(opt){
             case 'u':
                 url = optarg;
                 break;
@@ -124,38 +126,47 @@ int main(int argc, char *argv[]) {
     // Parse URL
     parse_url(url, hostname, path);
 
-    // If the -i option is active, display debug information but do not exit
+    // If the -i option is active, display debug information
     if (show_info) {
         printf("INFO: host: %s\nINFO: web_file: %s\nINFO: output_file: %s\n", hostname, path, filename);
+
+        // Write the debug information to the specified file
+        FILE *file = fopen(filename, "w");
+        if (file) {
+            fprintf(file, "INFO: host: %s\nINFO: web_file: %s\nINFO: output_file: %s\n", hostname, path, filename);
+            fclose(file);
+        } else {
+            std::cerr << "Error: Unable to write debug information to file: " << filename << std::endl;
+        }
+        exit(0);
     }
 
     /* lookup the hostname using the parsed hostname */
     hinfo = gethostbyname(hostname);
-    if (hinfo == NULL) {
+    if (hinfo == NULL){
         errexit("cannot find name: %s", hostname);
     }
-
+    
     /* set endpoint information */
-    memset((char *)&sin, 0x0, sizeof(sin));
+    memset ((char *)&sin, 0x0, sizeof (sin));
     sin.sin_family = AF_INET;
+    //host to netoworks hton
     sin.sin_port = htons(PORT);  
 
-    memcpy((char *)&sin.sin_addr, hinfo->h_addr, hinfo->h_length);
+    memcpy ((char *)&sin.sin_addr,hinfo->h_addr,hinfo->h_length);
 
-    if ((protoinfo = getprotobyname(PROTOCOL)) == NULL) {
-        errexit("cannot find protocol information for %s", PROTOCOL);
-    }
+    if ((protoinfo = getprotobyname (PROTOCOL)) == NULL)
+        errexit ("cannot find protocol information for %s", PROTOCOL);
 
     /* allocate a socket */
+    /*   would be SOCK_DGRAM for UDP */
     sd = socket(PF_INET, SOCK_STREAM, protoinfo->p_proto);
-    if (sd < 0) {
-        errexit("cannot create socket", NULL);
-    }
+    if (sd < 0)
+        errexit("cannot create socket",NULL);
 
     /* connect the socket */
-    if (connect(sd, (struct sockaddr *)&sin, sizeof(sin)) < 0) {
-        errexit("cannot connect", NULL);
-    }
+    if (connect (sd, (struct sockaddr *)&sin, sizeof(sin)) < 0)
+        errexit ("cannot connect", NULL);
 
     // Construct the HTTP request
     int request_length = snprintf(buffer, BUFLEN, "GET %s HTTP/1.0\r\nHost: %s\r\nUser-Agent: Case CSDS 325/425 WebClient 0.1\r\n\r\n", path, hostname);
@@ -175,39 +186,44 @@ int main(int argc, char *argv[]) {
     // Read the server's response into the buffer
     memset(buffer, 0x0, BUFLEN);
     ret = read(sd, buffer, BUFLEN - 1);
-    if (ret < 0) {
+    if (ret < 0)
         errexit("reading error", NULL);
-    }
 
     // If the -a option is active, display only the response headers
-    char *header_end = strstr(buffer, "\r\n\r\n");  // Find the end of the headers
-    if (show_response && header_end) {
-        *header_end = '\0';  // Null-terminate the header section
+    if (show_response) {
+        char *header_end = strstr(buffer, "\r\n\r\n");  // Find the end of the headers
+        if (header_end) {
+            *header_end = '\0';  // Null-terminate the header section
 
-        // Print each line with "RSP: " prefix
-        char *line = strtok(buffer, "\r\n");
-        while (line != nullptr) {
-            std::cout << "RSP: " << line << std::endl;
-            line = strtok(nullptr, "\r\n");
+            // Print each line with "RSP: " prefix
+            char *line = strtok(buffer, "\r\n");
+            while (line != nullptr) {
+                std::cout << "RSP: " << line << std::endl;
+                line = strtok(nullptr, "\r\n");
+            }
         }
-    }
-
-    // Write the body content to the file specified by the -w option, regardless of the -i or -a flag
-    if (strstr(buffer, "200 OK") && header_end) {  // Check if the response contains a "200 OK" status code
-        FILE *file = fopen(filename, "w");
-        if (file) {
-            // Write the body content to the file without the header
-            fwrite(header_end + 4, 1, strlen(header_end + 4), file);
-            fclose(file);
-        } else {
-            std::cerr << "Error: Unable to write content to file: " << filename << std::endl;
+    } else if (strstr(buffer, "200 OK")) {  // Check if the response contains a "200 OK" status code
+        char *header_end = strstr(buffer, "\r\n\r\n");  // Find the end of the headers
+        if (header_end) {
+            // Write the body content to the file specified by the -w option
+            FILE *file = fopen(filename, "w");
+            if (file) {
+                // Add "RSP: " prefix to each line in the body content before writing to the file
+                char *body_line = strtok(header_end + 4, "\r\n");
+                while (body_line != nullptr) {
+                    fprintf(file, "RSP: %s\n", body_line);
+                    body_line = strtok(nullptr, "\r\n");
+                }
+                fclose(file);
+            } else {
+                std::cerr << "Error: Unable to write content to file: " << filename << std::endl;
+            }
         }
     } else {
         std::cerr << "Error: Server returned a non-200 status code." << std::endl;
     }
-
+            
     /* close & exit */
-    close(sd);
-    exit(0);
+    close (sd);
+    exit (0);
 }
-

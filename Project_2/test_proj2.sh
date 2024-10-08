@@ -1,39 +1,24 @@
 #!/bin/bash
 
-# Function to clean output files by removing lines with 'RSP: Date:'
-clean_output() {
-    input_file=$1
-    cleaned_output_file=$2
-
-    # Remove lines starting with 'RSP: Date:' from the input file and save to the cleaned output file
-    grep -v '^RSP: Date: ' "$input_file" > "$cleaned_output_file"
-}
-
 # Function to run a single test
 run_test() {
     sample_number=$1
     command_to_run=$2
     expected_output_file=$3
     actual_output_file="actual_output_${sample_number}.txt"
-    cleaned_expected_output_file="cleaned_${expected_output_file}"
-    cleaned_actual_output_file="cleaned_${actual_output_file}"
 
     echo "Running Sample $sample_number..."
-
+    
     # Run the command and save its output to a file
     eval "$command_to_run" > "$actual_output_file" 2>&1
 
-    # Clean the output files by removing lines containing 'RSP: Date:'
-    clean_output "$expected_output_file" "$cleaned_expected_output_file"
-    clean_output "$actual_output_file" "$cleaned_actual_output_file"
-
-    # Compare the cleaned actual output with the cleaned expected output
-    if diff -q "$cleaned_expected_output_file" "$cleaned_actual_output_file" > /dev/null; then
+    # Compare the actual output with the expected output
+    if diff -q "$expected_output_file" "$actual_output_file" > /dev/null; then
         echo "Sample $sample_number - pass"
     else
         echo "Sample $sample_number - fail"
         echo "Differences:"
-        diff -u "$cleaned_expected_output_file" "$cleaned_actual_output_file" | grep '^[+-]' | sed 's/^/    /' | cat -vte
+        diff  -u "$expected_output_file" "$actual_output_file" | grep '^[+-]' | sed 's/^/    /' | cat -vte
     fi
     echo
 }

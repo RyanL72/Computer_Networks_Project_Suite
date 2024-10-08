@@ -1,3 +1,0 @@
-INFO: host: dnmmt.com
-INFO: web_file: /
-INFO: output_file: dnmmt.html

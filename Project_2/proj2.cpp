@@ -142,6 +142,7 @@ int main (int argc, char *argv [])
     // If the -i option is active, display debug information
     if (show_info) {
         printf("INFO: host: %s\nINFO: web_file: %s\nINFO: output_file: %s\n", hostname, path, filename);
+        exit(0);
     }
 
 
@@ -172,13 +173,21 @@ int main (int argc, char *argv [])
     if (connect (sd, (struct sockaddr *)&sin, sizeof(sin)) < 0)
         errexit ("cannot connect", NULL);
 
+    // Construct the HTTP request
     int request_length = snprintf(buffer, BUFLEN, "GET %s HTTP/1.0\r\nHost: %s\r\nUser-Agent: Case CSDS 325/425 WebClient 0.1\r\n\r\n", path, hostname);
     if (request_length >= BUFLEN) {
         fprintf(stderr, "Error: HTTP request was truncated. Buffer size is too small.\n");
         exit(EXIT_FAILURE);
     }
-    
+
+    // If the -q option is active, display the HTTP request details
+    if (show_request) {
+        printf("REQ: GET %s HTTP/1.0\nREQ: Host: %s\nREQ: User-Agent: Case CSDS 325/425 WebClient 0.1\n", path, hostname);
+    }
+
+    // Send the HTTP request to the server
     write(sd, buffer, strlen(buffer));
+
 
 
     /* snarf whatever server provides and print it */
@@ -202,7 +211,6 @@ int main (int argc, char *argv [])
             if (file) {
                 fprintf(file, "%s", header_end + 4);  // Write the body content to the file
                 fclose(file);
-                printf("Content saved to file: %s\n", filename);
             } else {
                 fprintf(stderr, "Error: Unable to write content to file: %s\n", filename);
             }
@@ -210,7 +218,6 @@ int main (int argc, char *argv [])
     } else {
         fprintf(stderr, "Error: Server returned a non-200 status code.\n");
     }
-
             
     /* close & exit */
     close (sd);

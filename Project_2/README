@@ -1,0 +1,8 @@
+to run tests
+
+sudo apt-get install jq
+
+sudo apt-get install dos2unix
+
+chmod +x test_proj2.sh   
+./test_proj2.sh

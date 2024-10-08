@@ -190,7 +190,7 @@ int main (int argc, char *argv [])
 
 
 
-    /* snarf whatever server provides and print it */
+    // Read the server's response into the buffer
     memset(buffer, 0x0, BUFLEN);
     ret = read(sd, buffer, BUFLEN - 1);
     if (ret < 0)
@@ -218,6 +218,7 @@ int main (int argc, char *argv [])
     } else {
         fprintf(stderr, "Error: Server returned a non-200 status code.\n");
     }
+
             
     /* close & exit */
     close (sd);

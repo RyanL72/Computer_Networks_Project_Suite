@@ -145,13 +145,12 @@ int main (int argc, char *argv [])
         exit(0);
     }
 
-
     /* lookup the hostname using the parsed hostname */
     hinfo = gethostbyname(hostname);
-    if (hinfo == NULL)
+    if (hinfo == NULL){
         errexit("cannot find name: %s", hostname);
-
-
+    }
+    
     /* set endpoint information */
     memset ((char *)&sin, 0x0, sizeof (sin));
     sin.sin_family = AF_INET;
@@ -188,8 +187,6 @@ int main (int argc, char *argv [])
     // Send the HTTP request to the server
     write(sd, buffer, strlen(buffer));
 
-
-
     // Read the server's response into the buffer
     memset(buffer, 0x0, BUFLEN);
     ret = read(sd, buffer, BUFLEN - 1);
@@ -218,7 +215,6 @@ int main (int argc, char *argv [])
     } else {
         fprintf(stderr, "Error: Server returned a non-200 status code.\n");
     }
-
             
     /* close & exit */
     close (sd);

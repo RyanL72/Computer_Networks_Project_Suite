@@ -21,7 +21,7 @@ Description: Web Client
 #define HOST_POS 1
 #define PORT_POS 2
 #define PROTOCOL "tcp"
-#define BUFLEN 1024
+#define BUFLEN 4096
 #define PORT 80
 #define URL_PREFIX "http://"
 
@@ -41,37 +41,35 @@ int errexit (const char *format, const char *arg)
     exit (ERROR);
 }
 
-// Function to parse the URL and extract the hostname and port
-void parse_url(const char *url, char *hostname, int *port) {
-    const char *url_prefix = "http://";  // Define the URL prefix
-    int default_port = 80;               // Default port for HTTP
+// Function to parse the URL and extract the hostname and path
+void parse_url(const char *url, char *hostname, char *path) {
+    size_t prefix_length = strlen(URL_PREFIX);
 
-    // Check if the URL starts with "http://"
-    if (strncasecmp(url, url_prefix, strlen(url_prefix)) != 0) {
-        errexit("Invalid URL format. URL must start with 'http://'");
+    // Check if the URL starts with "http://", case-insensitively
+    if (strncasecmp(url, URL_PREFIX, prefix_length) != 0) {
+        fprintf(stderr, "Error: URL must start with '%s'\n", URL_PREFIX);
+        exit(EXIT_FAILURE);
     }
 
-    // Move past "http://"
-    const char *host_start = url + strlen(url_prefix);
-    const char *port_start = strchr(host_start, ':');
-    const char *path_start = strchr(host_start, '/');
+    // Move the pointer past the "http://" prefix
+    url += prefix_length;
 
-    if (port_start && (!path_start || port_start < path_start)) {
-        // There is a port specified in the URL
-        strncpy(hostname, host_start, port_start - host_start);
-        hostname[port_start - host_start] = '\0'; // Null-terminate the hostname string
-        *port = atoi(port_start + 1);  // Convert the port string to an integer
-    } else if (path_start) {
-        // No port specified, use the default port 80
-        strncpy(hostname, host_start, path_start - host_start);
-        hostname[path_start - host_start] = '\0'; // Null-terminate the hostname string
-        *port = default_port;  // Use the default HTTP port 80
+    // Find the first '/' in the remaining URL to separate the hostname and path
+    const char *slash_position = strchr(url, '/');
+    if (slash_position) {
+        // Copy the hostname part
+        strncpy(hostname, url, slash_position - url);
+        hostname[slash_position - url] = '\0'; // Null-terminate the hostname string
+
+        // Copy the path part
+        strcpy(path, slash_position);
     } else {
-        // Only hostname, no port or path specified
-        strcpy(hostname, host_start);
-        *port = default_port;  // Use the default HTTP port 80
+        // If no path is specified, set the path to "/"
+        strcpy(hostname, url);
+        strcpy(path, "/");
     }
 }
+
 
 
 int main (int argc, char *argv [])
@@ -98,6 +96,10 @@ int main (int argc, char *argv [])
     //variables to store command-line options
     char *url= NULL, *filename=NULL;
     int show_info = 0, show_request = 0, show_response = 0;
+
+    char hostname[BUFLEN];
+    char path[BUFLEN];
+
 
     //command-line argument parsing
     int opt;
@@ -133,16 +135,28 @@ int main (int argc, char *argv [])
         usage(argv[0], "One of the options: '-i', '-q', or '-a' must be specified.");
     }
     
-    /* lookup the hostname */
-    hinfo = gethostbyname (argv [HOST_POS]);
+    // parse url
+    parse_url(url, hostname, path);
+
+    //debug
+    // If the -i option is active, display debug information
+    if (show_info) {
+        printf("INFO: host: %s\nINFO: web_file: %s\nINFO: output_file: %s\n", hostname, path, filename);
+    }
+
+
+    /* lookup the hostname using the parsed hostname */
+    hinfo = gethostbyname(hostname);
     if (hinfo == NULL)
-        errexit ("cannot find name: %s", argv [HOST_POS]);
+        errexit("cannot find name: %s", hostname);
+
 
     /* set endpoint information */
     memset ((char *)&sin, 0x0, sizeof (sin));
     sin.sin_family = AF_INET;
     //host to netoworks hton
-    sin.sin_port = htons (atoi (argv [PORT_POS]));
+    sin.sin_port = htons(PORT);  
+
     memcpy ((char *)&sin.sin_addr,hinfo->h_addr,hinfo->h_length);
 
     if ((protoinfo = getprotobyname (PROTOCOL)) == NULL)
@@ -158,12 +172,45 @@ int main (int argc, char *argv [])
     if (connect (sd, (struct sockaddr *)&sin, sizeof(sin)) < 0)
         errexit ("cannot connect", NULL);
 
+    int request_length = snprintf(buffer, BUFLEN, "GET %s HTTP/1.0\r\nHost: %s\r\nUser-Agent: Case CSDS 325/425 WebClient 0.1\r\n\r\n", path, hostname);
+    if (request_length >= BUFLEN) {
+        fprintf(stderr, "Error: HTTP request was truncated. Buffer size is too small.\n");
+        exit(EXIT_FAILURE);
+    }
+    
+    write(sd, buffer, strlen(buffer));
+
+
     /* snarf whatever server provides and print it */
-    memset (buffer,0x0,BUFLEN);
-    ret = read (sd,buffer,BUFLEN - 1);
+    memset(buffer, 0x0, BUFLEN);
+    ret = read(sd, buffer, BUFLEN - 1);
     if (ret < 0)
-        errexit ("reading error",NULL);
-    fprintf (stdout,"%s\n",buffer);
+        errexit("reading error", NULL);
+
+    // If the -a option is active, display only the response headers
+    if (show_response) {
+        char *header_end = strstr(buffer, "\r\n\r\n");  // Find the end of the headers
+        if (header_end) {
+            *header_end = '\0';  // Null-terminate the header section
+            printf("RSP: %s\n", buffer);  // Print the response headers
+        }
+    } else if (strstr(buffer, "200 OK")) {  // Check if the response contains a "200 OK" status code
+        char *header_end = strstr(buffer, "\r\n\r\n");  // Find the end of the headers
+        if (header_end) {
+            // Write the body content to the file specified by the -w option
+            FILE *file = fopen(filename, "w");
+            if (file) {
+                fprintf(file, "%s", header_end + 4);  // Write the body content to the file
+                fclose(file);
+                printf("Content saved to file: %s\n", filename);
+            } else {
+                fprintf(stderr, "Error: Unable to write content to file: %s\n", filename);
+            }
+        }
+    } else {
+        fprintf(stderr, "Error: Server returned a non-200 status code.\n");
+    }
+
             
     /* close & exit */
     close (sd);

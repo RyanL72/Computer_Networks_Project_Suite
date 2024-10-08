@@ -73,38 +73,23 @@ void parse_url(const char *url, char *hostname, char *path) {
     }
 }
 
-
-
 int main (int argc, char *argv [])
 {   
-    //structure used to specify the address for this socket.
+    // Structure used to specify the address for this socket
     struct sockaddr_in sin;
-
-    //structure that holds information about a host 
     struct hostent *hinfo;
-
-    //structure containing information about a protocal
     struct protoent *protoinfo;
-
-    //store data being sent or received over the network
-    //BUFLEN is typically defined elsewhere and represents the maximum size of the data 
-    char buffer [BUFLEN];
-
-    //sd socket descriptor, an integer value returned by the socket() representing the unique identifier for a socket connection
-    //ret variable used to store return values from various socket functions. It is typically used to check for success or error codes
+    char buffer[BUFLEN];
     int sd, ret;
 
-    /*Command Line*/
-
-    //variables to store command-line options
-    char *url= NULL, *filename=NULL;
+    // Variables to store command-line options
+    char *url = NULL, *filename = NULL;
     int show_info = 0, show_request = 0, show_response = 0;
 
     char hostname[BUFLEN];
     char path[BUFLEN];
 
-
-    //command-line argument parsing
+    // Command-line argument parsing
     int opt;
     while((opt = getopt(argc, argv, "iu:qaw:")) != -1){
         switch(opt){
@@ -115,13 +100,13 @@ int main (int argc, char *argv [])
                 filename = optarg;
                 break;
             case 'i':
-                show_info=1;
+                show_info = 1;
                 break;
             case 'q':
-                show_request=1;
+                show_request = 1;
                 break;
             case 'a':
-                show_response=1;
+                show_response = 1;
                 break;
             default:
                 usage(argv[0], "Incorrect format use: %s [-i] [-q] [-a] -u URL -w filename\n");
@@ -137,14 +122,22 @@ int main (int argc, char *argv [])
     if (show_info + show_request + show_response != 1) {
         usage(argv[0], "One of the options: '-i', '-q', or '-a' must be specified.");
     }
-    
-    // parse url
+
+    // Parse URL
     parse_url(url, hostname, path);
 
-    //debug
     // If the -i option is active, display debug information
     if (show_info) {
         printf("INFO: host: %s\nINFO: web_file: %s\nINFO: output_file: %s\n", hostname, path, filename);
+
+        // Write the debug information to the specified file
+        FILE *file = fopen(filename, "w");
+        if (file) {
+            fprintf(file, "INFO: host: %s\nINFO: web_file: %s\nINFO: output_file: %s\n", hostname, path, filename);
+            fclose(file);
+        } else {
+            std::cerr << "Error: Unable to write debug information to file: " << filename << std::endl;
+        }
         exit(0);
     }
 

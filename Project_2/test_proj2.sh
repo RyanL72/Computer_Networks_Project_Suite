@@ -18,7 +18,7 @@ run_test() {
     else
         echo "Sample $sample_number - fail"
         echo "Differences:"
-        diff --ignore-matching-lines="RSP: Date:" -u "$expected_output_file" "$actual_output_file" | grep '^[+-]' | sed 's/^/    /' | cat -vte
+        diff  -u "$expected_output_file" "$actual_output_file" | grep '^[+-]' | sed 's/^/    /' | cat -vte
     fi
     echo
 }

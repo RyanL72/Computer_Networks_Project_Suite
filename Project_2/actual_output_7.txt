@@ -1,8 +1,0 @@
-RSP: HTTP/1.1 200 OK
-Date: Tue, 08 Oct 2024 03:54:44 GMT
-Server: Apache/2.4.6 (CentOS) mod_fcgid/2.3.9 PHP/5.6.33
-X-Powered-By: PHP/5.6.33
-Access-Control-Allow-Origin: *
-Content-Length: 663
-Connection: close
-Content-Type: text/html; charset=UTF-8

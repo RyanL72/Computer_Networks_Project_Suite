@@ -1,2 +1,0 @@
-Error: One of the options: '-i', '-q', or '-a' must be specified.
-Usage: ./proj2 [-i] [-q] [-a] -u URL -w filename

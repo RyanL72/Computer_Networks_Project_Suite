@@ -204,7 +204,7 @@ int main(int argc, char *argv[]) {
                             line = end + 2;  // Move to the start of the next line, skipping the '\r\n'
                         } else {
                             // If no '\r\n' is found, just print the remaining content as is
-                            std::cout << "RSP: " << line << std::endl;
+                            std::cout << "RSP: " << line << "\r\n";
                             break;
                         }
                     }

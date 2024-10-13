@@ -1,0 +1,4 @@
+gcc -o OS3 OS3.c
+./OS3 1
+
+./OS3

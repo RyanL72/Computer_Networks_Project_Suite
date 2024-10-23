@@ -35,6 +35,18 @@ int usage (std::string progname)
     exit (ERROR);
 }
 
+int badArgumentValues(std::string message="Bad Argument Value Error"){
+    std::cout << message << std::endl;
+    std::cout << "Argument values were invalid: \n" <<  "Please use the format: ./proj3 -p <Port Number> -r <Root directory> -t <Terminate token>" << std::endl;
+    exit (ERROR);
+}
+
+int ArgumentValidation(int port, std::string root, std::string token){
+    if(port <= 1024){
+    badArgumentValues("Port Numbers less than 1024 are reserved.");
+    }
+    return 0;
+}
 
 int errexit (std::string format, std::string arg)
 {
@@ -42,6 +54,7 @@ int errexit (std::string format, std::string arg)
     fprintf (stderr,"\n");
     exit (ERROR);
 }
+
 
 int main (int argc, char *argv [])
 {
@@ -61,36 +74,47 @@ int main (int argc, char *argv [])
     int sd, sd2;
     
     //check to see if the right options were provided.
-        int portNumber;
-        std::string rootDirectory;
-        std::string terminationToken;
+    int portNumber = -1;
+    std::string rootDirectory = "";
+    std::string terminationToken = "";
 
-        //get the options.
-        int opt;
-        while((opt = getopt(argc, argv,"p:r:t:")) != -1){
-            switch(opt){
-                case 'p':
-                    portNumber = atoi(optarg);
-                    break;
-                case 'r':   
-                    rootDirectory = optarg;
-                    break;
-                case 't':
-                    terminationToken = optarg;
-                    break;
-                case '?':
-                    usage(std::to_string(opt));
-                    break;
-            }
+    //get the options.
+    int opt;
+    while((opt = getopt(argc, argv,"p:r:t:")) != -1){
+        switch(opt){
+            case 'p':
+                portNumber = atoi(optarg);
+                break;
+            case 'r':   
+                rootDirectory = optarg;
+                break;
+            case 't':
+                terminationToken = optarg;
+                break;
+            case '?':
+                usage(std::to_string(opt));
+                break;
         }
-        //check to see if all the port, root directory, and terminate token were provided
-        std::cout << portNumber << std::endl;
-        std::cout << rootDirectory << std::endl;
-        std::cout << terminationToken << std::endl;
+    }
+    //check to see if all the port, root directory, and terminate token were provided
+    std::cout << portNumber << std::endl;
+    std::cout << rootDirectory << std::endl;
+    std::cout << terminationToken << std::endl;
+    
+    //handle missing things
+    if(portNumber == -1 || rootDirectory.empty() || terminationToken.empty() ){
+        badArgumentValues();
+    }
+
+    //validate the port
+    ArgumentValidation(portNumber, rootDirectory, terminationToken);
+
 
     /* determine protocol */
     if ((protoinfo = getprotobyname (PROTOCOL)) == NULL)
         errexit ("cannot find protocol information for ", PROTOCOL);
+    
+    std::cout << "Protocol: " << protoinfo->p_name << "\n" << "Number: " << protoinfo->p_proto << std::endl;
 
     /* setup endpoint info */
     memset ((char *)&sin,0x0,sizeof (sin));

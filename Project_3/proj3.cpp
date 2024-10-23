@@ -63,7 +63,7 @@ int main (int argc, char *argv [])
     //check to see if the right options were provided.
         int portNumber;
         std::string rootDirectory;
-        int terminateToken;
+        std::string terminationToken;
 
         //get the options.
         int opt;
@@ -76,7 +76,7 @@ int main (int argc, char *argv [])
                     rootDirectory = optarg;
                     break;
                 case 't':
-                    terminateToken = atoi(optarg);
+                    terminationToken = optarg;
                     break;
                 case '?':
                     usage(std::to_string(opt));
@@ -86,7 +86,7 @@ int main (int argc, char *argv [])
         //check to see if all the port, root directory, and terminate token were provided
         std::cout << portNumber << std::endl;
         std::cout << rootDirectory << std::endl;
-        std::cout <<terminateToken << std::endl;
+        std::cout << terminationToken << std::endl;
 
     /* determine protocol */
     if ((protoinfo = getprotobyname (PROTOCOL)) == NULL)

@@ -109,7 +109,6 @@ int main (int argc, char *argv [])
     //validate the port
     ArgumentValidation(portNumber, rootDirectory, terminationToken);
 
-
     /* determine protocol */
     if ((protoinfo = getprotobyname (PROTOCOL)) == NULL)
         errexit ("cannot find protocol information for ", PROTOCOL);
@@ -117,11 +116,20 @@ int main (int argc, char *argv [])
     std::cout << "Protocol: " << protoinfo->p_name << "\n" << "Number: " << protoinfo->p_proto << std::endl;
 
     /* setup endpoint info */
+
+    // (char *)&sin means converting memory address of sin into a byte ptr
+    // 0x0 is value to set this memory to
+    // sizeof (sin) is sockaddr_in size 
+
+    /*
+    so this is saying set memory to this address of sin (in the form of a pointer to a char or byte- typically used in memory level access) to the value of 0x0 and allocate a size of however big sin is */
     memset ((char *)&sin,0x0,sizeof (sin));
+
+
     sin.sin_family = AF_INET;
     sin.sin_addr.s_addr = INADDR_ANY;
     sin.sin_port = htons ((u_short) atoi (argv [PORT_POS]));
-
+ 
     /* allocate a socket */
     /*   would be SOCK_DGRAM for UDP */
     sd = socket(PF_INET, SOCK_STREAM, protoinfo->p_proto);

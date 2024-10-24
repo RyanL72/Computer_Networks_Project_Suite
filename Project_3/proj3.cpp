@@ -120,22 +120,28 @@ int main (int argc, char *argv [])
     // (char *)&sin means converting memory address of sin into a byte ptr
     // 0x0 is value to set this memory to
     // sizeof (sin) is sockaddr_in size 
-
     /*
-    so this is saying set memory to this address of sin (in the form of a pointer to a char or byte- typically used in memory level access) to the value of 0x0 and allocate a size of however big sin is */
+    so this is saying set memory to this address of sin (in the form of a pointer to a 
+    char or byte- typically used in memory level access) to the value of 0x0 
+    and allocate a size of however big sin is */
     memset ((char *)&sin,0x0,sizeof (sin));
 
-
+    // AF_INET is for ipv4
     sin.sin_family = AF_INET;
+
+    // INADDR_ANY tells the socket to listen to all available interfaces
     sin.sin_addr.s_addr = INADDR_ANY;
-    sin.sin_port = htons ((u_short) atoi (argv [PORT_POS]));
+
+    // host to networks byte order (Big Endian) 
+    //Not sure if this should be my port number or what. Consult the socketsd.c for original.
+    sin.sin_port = htons ((u_short) (portNumber));
  
     /* allocate a socket */
     /*   would be SOCK_DGRAM for UDP */
     sd = socket(PF_INET, SOCK_STREAM, protoinfo->p_proto);
     if (sd < 0)
         errexit("cannot create socket", NULL);
-
+    
     /* bind the socket */
     if (bind (sd, (struct sockaddr *)&sin, sizeof(sin)) < 0)
         errexit ("cannot bind to port %s", argv [PORT_POS]);

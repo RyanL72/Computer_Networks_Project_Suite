@@ -20,6 +20,8 @@ Description: IPv4 format checker
 #include <string>    // for std::string
 #include <cctype>    // for isdigit
 #include <stdexcept> // for std::stoi
+#include <arpa/inet.h>   // For inet_ntoa()
+
 
 #define REQUIRED_ARGC 6
 #define PORT_POS 1
@@ -134,7 +136,7 @@ int main (int argc, char *argv [])
 
     // host to networks byte order (Big Endian) 
     //Not sure if this should be my port number or what. Consult the socketsd.c for original.
-    sin.sin_port = htons ((u_short) (portNumber));
+    sin.sin_port = htons (portNumber);
  
     /* allocate a socket */
     /*   would be SOCK_DGRAM for UDP */
@@ -143,12 +145,32 @@ int main (int argc, char *argv [])
         errexit("cannot create socket", NULL);
     
     /* bind the socket */
-    if (bind (sd, (struct sockaddr *)&sin, sizeof(sin)) < 0)
-        errexit ("cannot bind to port %s", argv [PORT_POS]);
+    if (bind (sd, (struct sockaddr *)&sin, sizeof(sin)) < 0){
+        errexit ("cannot bind to port %s", std::to_string(portNumber));
+    }
+
 
     /* listen for incoming connections */
     if (listen (sd, QLEN) < 0)
-        errexit ("cannot listen on port %s\n", argv [PORT_POS]);
+        errexit ("cannot listen on port %s\n", std::to_string(portNumber));
+
+    //check point
+    if (protoinfo != NULL) {
+        std::cout << "Protocol Name: " << protoinfo->p_name << std::endl;
+        std::cout << "Protocol Number: " << protoinfo->p_proto << std::endl;
+    } else {
+        std::cerr << "Protocol information is missing!" << std::endl;
+    }
+    std::cout << "Socket Family: " << sin.sin_family << std::endl;
+    std::cout << "Socket Address: " << inet_ntoa(sin.sin_addr) << std::endl;  // converts the address to string form
+    std::cout << "Socket Port: " << ntohs(sin.sin_port) << std::endl;  // converts back from network byte order
+    std::cout << "Socket Descriptor: " << sd << std::endl;
+    if (listen(sd, QLEN) == 0) {
+    std::cout << "Server is now listening on port: " << portNumber << std::endl;
+    } else {
+        std::cerr << "Failed to listen on port: " << portNumber << std::endl;
+    }
+    exit (0);
 
     /* accept a connection */
     addrlen = sizeof (addr);

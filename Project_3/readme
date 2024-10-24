@@ -1,0 +1,8 @@
+scp -r ./* rhl72@eecslab-11.case.edu:~/Project_3
+
+rsync -avz --progress ./* rhl72@eecslab-11.case.edu:~/Project_3
+
+
+ps aux | grep <process_name>
+
+kill -9 pid

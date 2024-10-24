@@ -62,53 +62,82 @@ int errexit (std::string format, std::string arg)
     exit (ERROR);
 }
 
-// Function to send a "400 Malformed Request" response
-void sendMalformedResponse() {
-    std::cout << "HTTP/1.1 400 Malformed Request\r\n\r\n";
-}
 
 //returns array that has 
 //method at 0
 //url at 1
 //http version at 2
-#include <iostream>
-#include <sstream>
 #include <array>
 #include <string>
+#include <sstream>
+#include <iostream>
+#include <stdexcept> // For exceptions
 #include <map>
 
 std::array<std::string, 3> parseHTTPRequest(char buffer[], size_t bufferSize) {
-    std::istringstream requestStream(std::string(buffer, bufferSize));
-    std::string line;
+    try {
+        // Create a string stream from the buffer
+        std::istringstream requestStream(std::string(buffer, bufferSize));
+        std::string line;
 
-    // Parse the request line (format - "GET /index.html HTTP/1.1")
-    std::getline(requestStream, line);
-    std::istringstream requestLineStream(line);
-    std::string method, url, httpVersion;
-    requestLineStream >> method >> url >> httpVersion;
-
-    // Store the method, URL, and HTTP version in a fixed-size array
-    std::array<std::string, 3> requestInfo = {method, url, httpVersion};
-
-    // Parse headers
-    std::map<std::string, std::string> headers;
-    while (std::getline(requestStream, line) && line != "\r") {
-        size_t colon = line.find(":");
-        if (colon != std::string::npos) {
-            std::string headerName = line.substr(0, colon);
-            std::string headerValue = line.substr(colon + 2); // Skip ": "
-            headers[headerName] = headerValue;
+        // 1. Parse the request line (METHOD ARGUMENT HTTP/VERSION)
+        std::getline(requestStream, line);
+        if (line.empty()) {
+            throw std::invalid_argument("HTTP request must start with a request line. 1");
         }
-    }
 
-    // parse the body if present
-    std::string body;
-    if (std::getline(requestStream, body)) {
-        std::cout << "Body: " << body << std::endl;
-    }
+        // Verify that the request line ends with \r\n
+        if (line.back() != '\n' || line[line.size() - 2] != '\r') {
+            std::cout << line << std::endl;
+            throw std::invalid_argument("Request line must end with \\r\\n. 2");
+        }
 
-    // return the array containing method, URL, and HTTP version
-    return requestInfo;
+        std::istringstream requestLineStream(line);
+        std::string method, url, httpVersion;
+        requestLineStream >> method >> url >> httpVersion;
+
+        // Verify that we got all three parts of the request line
+        if (method.empty() || url.empty() || httpVersion.empty()) {
+            throw std::invalid_argument("Malformed request line. Must be 'METHOD ARGUMENT HTTP/VERSION'. 3");
+        }
+
+        // Store the method, URL, and HTTP version in a fixed-size array
+        std::array<std::string, 3> requestInfo = {method, url, httpVersion};
+
+        // 2. Parse headers (arbitrary lines, but should end with \r\n)
+        std::map<std::string, std::string> headers;
+        while (std::getline(requestStream, line) && line != "\r") {
+            if (line.back() != '\n' || line[line.size() - 2] != '\r') {
+                throw std::invalid_argument("Each header line must end with \\r\\n. 4");
+            }
+
+            size_t colon = line.find(":");
+            if (colon != std::string::npos) {
+                std::string headerName = line.substr(0, colon);
+                std::string headerValue = line.substr(colon + 2); // Skip ": "
+                headers[headerName] = headerValue;
+            }
+        }
+
+        // 3. Check for the blank line at the end of headers
+        if (line != "\r") {
+            throw std::invalid_argument("HTTP request must end with a blank line (\\r\\n). 5");
+        }
+
+        // 4. Optionally parse the body (this example just prints it if present)
+        std::string body;
+        if (std::getline(requestStream, body)) {
+            std::cout << "Body: " << body << std::endl;
+        }
+
+        // Return the array containing method, URL, and HTTP version
+        return requestInfo;
+    }
+    catch (const std::invalid_argument& e) {
+        std::cerr << "Invalid HTTP request: " << e.what() << std::endl;
+        // Return an empty array or handle this error as needed
+        return {};
+    }
 }
 
 
@@ -217,8 +246,8 @@ int main (int argc, char *argv [])
         std::cerr << "Protocol information is missing!" << std::endl;
     }
     std::cout << "Socket Family: " << sin.sin_family << std::endl;
-    std::cout << "Socket Address: " << inet_ntoa(sin.sin_addr) << std::endl;  // converts the address to string form
-    std::cout << "Socket Port: " << ntohs(sin.sin_port) << std::endl;  // converts back from network byte order
+    std::cout << "Socket Address: " << inet_ntoa(sin.sin_addr) << std::endl;  
+    std::cout << "Socket Port: " << ntohs(sin.sin_port) << std::endl;  
     std::cout << "Socket Descriptor: " << sd << std::endl;
     if (listen(sd, QLEN) == 0) {
     std::cout << "Server is now listening on port: " << portNumber << std::endl;

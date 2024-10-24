@@ -170,13 +170,16 @@ int main (int argc, char *argv [])
     } else {
         std::cerr << "Failed to listen on port: " << portNumber << std::endl;
     }
-    exit (0);
 
     /* accept a connection */
     addrlen = sizeof (addr);
     sd2 = accept (sd,&addr,&addrlen);
     if (sd2 < 0)
         errexit ("error accepting connection", NULL);
+
+    std::cout << "Request Accepted with sd2: " << sd2 << std::endl;
+    
+    exit (0);
     
     /* write message to the connection */
     if (write (sd2,argv [MSG_POS],strlen (argv [MSG_POS])) < 0)

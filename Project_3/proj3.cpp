@@ -177,10 +177,24 @@ int main (int argc, char *argv [])
     if (sd2 < 0)
         errexit ("error accepting connection", NULL);
 
+    //see what request looks like
     std::cout << "Request Accepted with sd2: " << sd2 << std::endl;
     
+    char buffer[BUFLEN]; 
+    memset(buffer, 0, sizeof(buffer));  
+
+    // Read the message from the client
+    int bytesReceived = recv(sd2, buffer, sizeof(buffer) - 1, 0);  // Read up to buffer size
+    if (bytesReceived < 0) {
+        std::cerr << "Error reading from client" << std::endl;
+    } else {
+        // Null-terminate the buffer to treat it as a string
+        buffer[bytesReceived] = '\0';
+        std::cout << "Client Message: " << buffer << std::endl;
+    }
+
     exit (0);
-    
+
     /* write message to the connection */
     if (write (sd2,argv [MSG_POS],strlen (argv [MSG_POS])) < 0)
         errexit ("error writing message: %s", argv [MSG_POS]);

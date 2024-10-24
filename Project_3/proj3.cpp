@@ -21,7 +21,9 @@ Description: IPv4 format checker
 #include <cctype>    // for isdigit
 #include <stdexcept> // for std::stoi
 #include <arpa/inet.h>   // For inet_ntoa()
-
+#include <sstream>
+#include <map>
+#include <array>
 
 #define REQUIRED_ARGC 6
 #define PORT_POS 1
@@ -30,6 +32,9 @@ Description: IPv4 format checker
 #define QLEN 1
 #define PROTOCOL "tcp"
 #define BUFLEN 1024
+#define METHOD_POS 0
+#define TARGET_POS 1 
+#define PROTOCOL_VERS_POS 2
 
 int usage (std::string progname)
 {
@@ -56,6 +61,56 @@ int errexit (std::string format, std::string arg)
     fprintf (stderr,"\n");
     exit (ERROR);
 }
+
+// Function to send a "400 Malformed Request" response
+void sendMalformedResponse() {
+    std::cout << "HTTP/1.1 400 Malformed Request\r\n\r\n";
+}
+
+//returns array that has 
+//method at 0
+//url at 1
+//http version at 2
+#include <iostream>
+#include <sstream>
+#include <array>
+#include <string>
+#include <map>
+
+std::array<std::string, 3> parseHTTPRequest(char buffer[], size_t bufferSize) {
+    std::istringstream requestStream(std::string(buffer, bufferSize));
+    std::string line;
+
+    // Parse the request line (format - "GET /index.html HTTP/1.1")
+    std::getline(requestStream, line);
+    std::istringstream requestLineStream(line);
+    std::string method, url, httpVersion;
+    requestLineStream >> method >> url >> httpVersion;
+
+    // Store the method, URL, and HTTP version in a fixed-size array
+    std::array<std::string, 3> requestInfo = {method, url, httpVersion};
+
+    // Parse headers
+    std::map<std::string, std::string> headers;
+    while (std::getline(requestStream, line) && line != "\r") {
+        size_t colon = line.find(":");
+        if (colon != std::string::npos) {
+            std::string headerName = line.substr(0, colon);
+            std::string headerValue = line.substr(colon + 2); // Skip ": "
+            headers[headerName] = headerValue;
+        }
+    }
+
+    // parse the body if present
+    std::string body;
+    if (std::getline(requestStream, body)) {
+        std::cout << "Body: " << body << std::endl;
+    }
+
+    // return the array containing method, URL, and HTTP version
+    return requestInfo;
+}
+
 
 
 int main (int argc, char *argv [])
@@ -193,6 +248,11 @@ int main (int argc, char *argv [])
         std::cout << "Client Message: " << buffer << std::endl;
     }
 
+    //parse requeset
+    std::array<std::string, 3> requestInfo = parseHTTPRequest(buffer, BUFLEN);
+    std::cout << "Method: " << requestInfo[0] << std::endl;
+    std::cout << "URL: " << requestInfo[1] << std::endl;
+    std::cout << "HTTP Version: " << requestInfo[2] << std::endl;
     exit (0);
 
     /* write message to the connection */

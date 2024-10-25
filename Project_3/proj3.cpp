@@ -346,33 +346,28 @@ int main (int argc, char *argv [])
                 respondToClient(notFoundResponse, sd2);
             }
             else{
-                std::ifstream file(filepath, std::ios::binary);
-                if(!file){
-                    std::cerr << "Error opening file." << std::endl;
-                    return -1;
-                }
+                std::string fileContent = readFile(filepath);
 
                 std::string response = successMessage;
-
-                write(sd2, response.c_str(), response.size());
                 
-                char buffer[BUFLEN];
-                size_t bytesRead = 0;
+                response+= fileContent;
 
-                while(file.read(buffer, BUFLEN || (bytesRead = file.gcount()) > 0)){
+                std::cout << "Attempting to Write response: " << response << std::endl;
+
+                size_t bytesSent = 0;
+                while(bytesSent < response.size()){
                     
-                    ssize_t bytesSent = 0;
+                    //determine the size of the next chunk to send
+                    size_t chunkSize = std::min(static_cast<size_t>(BUFLEN), response.size() - bytesSent);
 
-                    while(bytesSent < static_cast<ssize_t>(bytesRead) ){
-                        //send chunk
-                        ssize_t result = write(sd2, buffer + bytesSent, bytesRead - bytesSent);
+                    //send chunk
+                    ssize_t result = write(sd2, response.c_str() + bytesSent, chunkSize);
 
-                        if(result < 0){
-                            std::cerr << "Error writing to socket \n";
-                            break;
-                        }
-                        bytesSent+=result;
+                    if(result < 0){
+                        std::cerr << "Error writing to socket \n";
+                        break;
                     }
+                    bytesSent+=result;
                 }
                 close(sd2);
             }

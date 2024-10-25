@@ -57,7 +57,7 @@ int badArgumentValues(std::string message="Bad Argument Value Error"){
 }
 
 int ArgumentValidation(int port, std::string root, std::string token){
-    if(port <= 1024){
+    if(port <= 1024 || port >= 65536){
     badArgumentValues("Port Numbers less than 1024 are reserved.");
     }
     return 0;
@@ -360,6 +360,7 @@ int main (int argc, char *argv [])
 
                 std::cout << "Attempting to Write response: " << response << std::endl;
                 write(sd2, response.c_str(), response.size());
+                close(sd2);
             }
             
         }

@@ -1,9 +1,9 @@
 /*
 Author: Ryan Lin
 CaseID: rhl72
-File name: proj1.cpp
+File name: proj3.cpp
 Date: 10-21-2024
-Description: IPv4 format checker
+Description: Webserver 
 */
 
 #include <stdio.h>
@@ -16,11 +16,11 @@ Description: IPv4 format checker
 #include <netinet/in.h>
 
 #include <iostream>
-#include <cstdlib>   // for exit()
-#include <string>    // for std::string
-#include <cctype>    // for isdigit
-#include <stdexcept> // for std::stoi
-#include <arpa/inet.h>   // For inet_ntoa()
+#include <cstdlib> 
+#include <string>    
+#include <cctype>    
+#include <stdexcept> 
+#include <arpa/inet.h>   
 #include <sstream>
 #include <map>
 #include <array>
@@ -185,8 +185,6 @@ std::array<std::string, 3> parseHTTPRequest(char buffer[], size_t bufferSize, in
     return requestInfo;
 }
 
-
-
 int main (int argc, char *argv [])
 {
     //for ipv4
@@ -280,27 +278,10 @@ int main (int argc, char *argv [])
 
     while(true){
 
-    
         /* listen for incoming connections */
         if (listen (sd, QLEN) < 0)
             errexit ("cannot listen on port %s\n", std::to_string(portNumber));
 
-        //check point
-        // if (protoinfo != NULL) {
-        //     std::cout << "Protocol Name: " << protoinfo->p_name << std::endl;
-        //     std::cout << "Protocol Number: " << protoinfo->p_proto << std::endl;
-        // } else {
-        //     std::cerr << "Protocol information is missing!" << std::endl;
-        // }
-        // std::cout << "Socket Family: " << sin.sin_family << std::endl;
-        // std::cout << "Socket Address: " << inet_ntoa(sin.sin_addr) << std::endl;  // converts the address to string form
-        // std::cout << "Socket Port: " << ntohs(sin.sin_port) << std::endl;  // converts back from network byte order
-        // std::cout << "Socket Descriptor: " << sd << std::endl;
-        // if (listen(sd, QLEN) == 0) {
-        // std::cout << "Server is now listening on port: " << portNumber << std::endl;
-        // } else {
-        //     std::cerr << "Failed to listen on port: " << portNumber << std::endl;
-        // }
 
         /* accept a connection */
         addrlen = sizeof (addr);

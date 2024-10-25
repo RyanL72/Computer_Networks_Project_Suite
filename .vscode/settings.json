@@ -58,6 +58,11 @@
         "sstream": "cpp",
         "map": "cpp",
         "set": "cpp",
-        "xtree": "cpp"
+        "xtree": "cpp",
+        "chrono": "cpp",
+        "filesystem": "cpp",
+        "forward_list": "cpp",
+        "iomanip": "cpp",
+        "ratio": "cpp"
     }
 }

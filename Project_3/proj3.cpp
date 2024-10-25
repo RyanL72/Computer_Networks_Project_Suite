@@ -41,6 +41,15 @@ Description: IPv4 format checker
 #define METHOD_POS 0
 #define ARGUMENT_POS 1
 #define HTTP_VERSION_POS 2
+const std::string malformedResponse = "HTTP/1.1 400 Malformed Request\r\n\r\n";
+
+const std::string unsupportedProtocolResponse = "HTTP/1.1 501 Protocol Not Implemented\r\n\r\n";   
+
+const std::string unsupportedMethodResponse = "HTTP/1.1 405 Unsupported Method\r\n\r\n";
+
+const std::string invalidFilenameResponse = "HTTP/1.1 406 Invalid Filenames\r\n\r\n";
+
+const std::string notFoundResponse = "HTTP/1.1 404 File Not Found\r\n\r\n";
 
 std::set<std::string> SUPPORTED_METHODS = {"GET", "SHUTDOWN"};
 
@@ -70,29 +79,6 @@ int errexit (std::string format, std::string arg)
     exit (ERROR);
 }
 
-// Function to send a "400 Malformed Request" response
-void sendMalformedResponse() {
-    std::cout << "HTTP/1.1 400 Malformed Request\r\n\r\n";
-    exit(ERROR);
-}
-
-// Function to send a "405 Unsupported Method" resposne
-void unsupportedProtocolResponse() {
-    std::cout << "HTTP/1.1 501 Protocol Not Implemented\r\n\r\n";
-    exit(ERROR);
-}
-
-// Function to send a "405 Unsupported Method" resposne
-void unsupportedMethodResponse() {
-    std::cout << "HTTP/1.1 405 Unsupported Method\r\n\r\n";
-    exit(ERROR);
-}
-
-//Function to send a " “HTTP/1.1 406 Invalid Filename\r\n\r\n”"
-void invalidFilenameResponse(){
-    std::cout << "HTTP/1.1 406 Invalid Filenames\r\n\r\n";
-    exit(ERROR);
-}
 
 bool fileExists(const std::string& filename) {
     return std::filesystem::exists(filename);
@@ -110,12 +96,17 @@ std::string readFile(const std::string& filepath) {
     return content;
 }
 
+void respondToClient(std::string mesg, int sd){
+        write (sd, mesg.c_str(), sizeof(mesg));
+}
+
+
 //returns array that has 
 //method at 0
 //url at 1
 //http version at 2
 
-std::array<std::string, 3> parseHTTPRequest(char buffer[], size_t bufferSize) {
+std::array<std::string, 3> parseHTTPRequest(char buffer[], size_t bufferSize, int sd) {
     std::istringstream requestStream(std::string(buffer, bufferSize));
     std::string line;
 
@@ -162,23 +153,22 @@ std::array<std::string, 3> parseHTTPRequest(char buffer[], size_t bufferSize) {
             r_triggered = false;
         }
         else if(r_triggered == true && value != '\n'){
-            sendMalformedResponse();
+            respondToClient(malformedResponse,sd);
         }
         i++;
     }
     if(final_line_bit == false){
-        std::cout << "final carriage bit missing" << std::endl;
-        sendMalformedResponse();
+        respondToClient(malformedResponse,sd);
     }
 
     //version
     if(httpVersion.find("HTTP/") == std::string::npos){
-        unsupportedProtocolResponse();
+        respondToClient(unsupportedProtocolResponse,sd);
     }
 
-        //check approve method
+    //check approve method
     if(SUPPORTED_METHODS.find(method) == SUPPORTED_METHODS.end()){
-        unsupportedMethodResponse();
+        respondToClient(unsupportedMethodResponse,sd);
     }
 
     // parse the body if present
@@ -331,7 +321,8 @@ int main (int argc, char *argv [])
         }
 
         //parse requeset
-        std::array<std::string, 3> requestInfo = parseHTTPRequest(buffer, BUFLEN);
+        std::array<std::string, 3> requestInfo = parseHTTPRequest(buffer, BUFLEN, sd2);
+
         std::cout << "Method: " << requestInfo[0] << std::endl;
         std::cout << "Argument: " << requestInfo[1] << std::endl;
         std::cout << "HTTP Version: " << requestInfo[2] << std::endl;
@@ -339,7 +330,7 @@ int main (int argc, char *argv [])
         if(requestInfo[METHOD_POS] == "GET"){
             std::string argument = requestInfo[ARGUMENT_POS];
             if(argument[0] != '/'){
-                invalidFilenameResponse();
+                respondToClient(invalidFilenameResponse ,sd2);
             }
             if(argument == "/"){
                 argument = "./index.html";
@@ -348,8 +339,7 @@ int main (int argc, char *argv [])
             std::string filepath = rootDirectory + argument;
             
             if(fileExists(filepath) == false){
-                std::string notFoundResponse = "HTTP/1.1 404 File Not Found\r\n\r\n";
-                write(sd2, notFoundResponse.c_str(), notFoundResponse.size());
+                respondToClient(notFoundResponse, sd2);
             }
             else{
                 std::string fileContent = readFile(filepath);
@@ -359,7 +349,12 @@ int main (int argc, char *argv [])
                 response+= fileContent;
 
                 std::cout << "Attempting to Write response: " << response << std::endl;
-                write(sd2, response.c_str(), response.size());
+                while(true){
+                    if(response.empty()){
+                        break;
+                    }
+                    write(sd2, response.c_str(), response.size());
+                }
                 close(sd2);
             }
             

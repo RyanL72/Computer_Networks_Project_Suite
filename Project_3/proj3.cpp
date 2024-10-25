@@ -284,79 +284,90 @@ int main (int argc, char *argv [])
         errexit ("cannot bind to port %s", std::to_string(portNumber));
     }
 
+    while(true){
 
-    /* listen for incoming connections */
-    if (listen (sd, QLEN) < 0)
-        errexit ("cannot listen on port %s\n", std::to_string(portNumber));
-
-    //check point
-    // if (protoinfo != NULL) {
-    //     std::cout << "Protocol Name: " << protoinfo->p_name << std::endl;
-    //     std::cout << "Protocol Number: " << protoinfo->p_proto << std::endl;
-    // } else {
-    //     std::cerr << "Protocol information is missing!" << std::endl;
-    // }
-    // std::cout << "Socket Family: " << sin.sin_family << std::endl;
-    // std::cout << "Socket Address: " << inet_ntoa(sin.sin_addr) << std::endl;  // converts the address to string form
-    // std::cout << "Socket Port: " << ntohs(sin.sin_port) << std::endl;  // converts back from network byte order
-    // std::cout << "Socket Descriptor: " << sd << std::endl;
-    // if (listen(sd, QLEN) == 0) {
-    // std::cout << "Server is now listening on port: " << portNumber << std::endl;
-    // } else {
-    //     std::cerr << "Failed to listen on port: " << portNumber << std::endl;
-    // }
-
-    /* accept a connection */
-    addrlen = sizeof (addr);
-    sd2 = accept (sd,&addr,&addrlen);
-    if (sd2 < 0)
-        errexit ("error accepting connection", NULL);
-
-    //see what request looks like
-    std::cout << "Request Accepted with sd2: " << sd2 << std::endl;
     
-    char buffer[BUFLEN]; 
-    memset(buffer, 0, sizeof(buffer));  
+        /* listen for incoming connections */
+        if (listen (sd, QLEN) < 0)
+            errexit ("cannot listen on port %s\n", std::to_string(portNumber));
 
-    // Read the message from the client
-    int bytesReceived = recv(sd2, buffer, sizeof(buffer) - 1, 0);  // Read up to buffer size
-    if (bytesReceived < 0) {
-        std::cerr << "Error reading from client" << std::endl;
-    } else {
-        // Null-terminate the buffer to treat it as a string
-        buffer[bytesReceived] = '\0';
-        std::cout << "Client Message: " << buffer << std::endl;
-    }
+        //check point
+        // if (protoinfo != NULL) {
+        //     std::cout << "Protocol Name: " << protoinfo->p_name << std::endl;
+        //     std::cout << "Protocol Number: " << protoinfo->p_proto << std::endl;
+        // } else {
+        //     std::cerr << "Protocol information is missing!" << std::endl;
+        // }
+        // std::cout << "Socket Family: " << sin.sin_family << std::endl;
+        // std::cout << "Socket Address: " << inet_ntoa(sin.sin_addr) << std::endl;  // converts the address to string form
+        // std::cout << "Socket Port: " << ntohs(sin.sin_port) << std::endl;  // converts back from network byte order
+        // std::cout << "Socket Descriptor: " << sd << std::endl;
+        // if (listen(sd, QLEN) == 0) {
+        // std::cout << "Server is now listening on port: " << portNumber << std::endl;
+        // } else {
+        //     std::cerr << "Failed to listen on port: " << portNumber << std::endl;
+        // }
 
-    //parse requeset
-    std::array<std::string, 3> requestInfo = parseHTTPRequest(buffer, BUFLEN);
-    // std::cout << "Method: " << requestInfo[0] << std::endl;
-    // std::cout << "Argument": " << requestInfo[1] << std::endl;
-    // std::cout << "HTTP Version: " << requestInfo[2] << std::endl;
-    
-    if(requestInfo[METHOD_POS] == "GET"){
-        std::string argument = requestInfo[ARGUMENT_POS];
-        if(argument[0] != '/'){
-            invalidFilenameResponse();
-        }
-        if(argument == "/"){
-            argument = "./index.html";
-        }
+        /* accept a connection */
+        addrlen = sizeof (addr);
+        sd2 = accept (sd,&addr,&addrlen);
+        if (sd2 < 0)
+            errexit ("error accepting connection", NULL);
 
-        std::string filepath = rootDirectory + argument;
+        //see what request looks like
+        std::cout << "Request Accepted with sd2: " << sd2 << std::endl;
         
-        if(fileExists(filepath) == false){
-            std::string notFoundResponse = "HTTP/1.1 404 File Not Found\r\n\r\n";
-            write(sd2, notFoundResponse.c_str(), notFoundResponse.size());
-            return 0;
-        }
-        
-        std::string fileContent = readFile(filepath);
+        char buffer[BUFLEN]; 
+        memset(buffer, 0, sizeof(buffer));  
 
-        std::string response = "HTTP/1.1 200 OK\r\n\r\n";
+        // Read the message from the client
+        int bytesReceived = recv(sd2, buffer, sizeof(buffer) - 1, 0);  // Read up to buffer size
+        if (bytesReceived < 0) {
+            std::cerr << "Error reading from client" << std::endl;
+        } else {
+            // Null-terminate the buffer to treat it as a string
+            buffer[bytesReceived] = '\0';
+            std::cout << "Client Message: " << buffer << std::endl;
+        }
+
+        //parse requeset
+        std::array<std::string, 3> requestInfo = parseHTTPRequest(buffer, BUFLEN);
+        // std::cout << "Method: " << requestInfo[0] << std::endl;
+        // std::cout << "Argument": " << requestInfo[1] << std::endl;
+        // std::cout << "HTTP Version: " << requestInfo[2] << std::endl;
         
-        response+= fileContent;
-        write(sd2, response.c_str(), response.size());
+        if(requestInfo[METHOD_POS] == "GET"){
+            std::string argument = requestInfo[ARGUMENT_POS];
+            if(argument[0] != '/'){
+                invalidFilenameResponse();
+            }
+            if(argument == "/"){
+                argument = "./index.html";
+            }
+
+            std::string filepath = rootDirectory + argument;
+            
+            if(fileExists(filepath) == false){
+                std::string notFoundResponse = "HTTP/1.1 404 File Not Found\r\n\r\n";
+                write(sd2, notFoundResponse.c_str(), notFoundResponse.size());
+            }
+            
+            std::string fileContent = readFile(filepath);
+
+            std::string response = "HTTP/1.1 200 OK\r\n\r\n";
+            
+            response+= fileContent;
+            write(sd2, response.c_str(), response.size());
+        }
+        else if(requestInfo[METHOD_POS] == "SHUTDOWN"){
+            if(requestInfo[ARGUMENT_POS] == terminationToken){
+                std::string response = "HTTP/1.1 200 Server Shutting Down\r\n\r\n";
+                write(sd2, response.c_str(), response.size());
+                close(sd);
+                close(sd2);
+                exit(0);
+            }
+        }
     }
 
     /* close connections and exit */

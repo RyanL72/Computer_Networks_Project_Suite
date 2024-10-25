@@ -351,13 +351,15 @@ int main (int argc, char *argv [])
                 std::string notFoundResponse = "HTTP/1.1 404 File Not Found\r\n\r\n";
                 write(sd2, notFoundResponse.c_str(), notFoundResponse.size());
             }
-            
-            std::string fileContent = readFile(filepath);
+            else{
+                std::string fileContent = readFile(filepath);
 
-            std::string response = "HTTP/1.1 200 OK\r\n\r\n";
+                std::string response = "HTTP/1.1 200 OK\r\n\r\n";
+                
+                response+= fileContent;
+                write(sd2, response.c_str(), response.size());
+            }
             
-            response+= fileContent;
-            write(sd2, response.c_str(), response.size());
         }
         else if(requestInfo[METHOD_POS] == "SHUTDOWN"){
             if(requestInfo[ARGUMENT_POS] == terminationToken){

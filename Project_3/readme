@@ -8,7 +8,7 @@ ps aux | grep proj3
 kill -9 pid
 
 ## Sample A
-echo -e -n "GET /5.txt HTTP/1.1\r\n\r\n" |nc eecslab-11.case.edu 2017
+echo -e -n "GET /5.txt HTTP/1.1\r\n\r\n" |nc eecslab-11.case.edu 2016
 
 echo -e -n "GET /not-there.txt HTTP/1.1\r\n\r\n" |nc eecslab-10.case.edu 2016
 

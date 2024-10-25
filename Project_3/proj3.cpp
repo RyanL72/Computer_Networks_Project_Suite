@@ -52,6 +52,8 @@ const std::string invalidFilenameResponse = "HTTP/1.1 406 Invalid Filenames\r\n\
 
 const std::string notFoundResponse = "HTTP/1.1 404 File Not Found\r\n\r\n";
 
+const std::string successMessage = "HTTP/1.1 200 OK\r\n\r\n";
+
 std::set<std::string> SUPPORTED_METHODS = {"GET", "SHUTDOWN"};
 
 int usage (std::string progname)
@@ -345,7 +347,7 @@ int main (int argc, char *argv [])
             else{
                 std::string fileContent = readFile(filepath);
 
-                std::string response = "HTTP/1.1 200 OK\r\n\r\n";
+                std::string response = successMessage;
                 
                 response+= fileContent;
 
@@ -355,7 +357,7 @@ int main (int argc, char *argv [])
                 while(bytesSent < response.size()){
                     
                     //determine the size of the next chunk to send
-                    size_t chunkSize = std::min(static_cast<size_t>(BUFLEN), sizeof(response) - bytesSent);
+                    size_t chunkSize = std::min(static_cast<size_t>(BUFLEN), response.size() - bytesSent);
 
                     //send chunk
                     ssize_t result = write(sd2, response.c_str() + bytesSent, chunkSize);

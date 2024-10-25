@@ -357,6 +357,8 @@ int main (int argc, char *argv [])
                 std::string response = "HTTP/1.1 200 OK\r\n\r\n";
                 
                 response+= fileContent;
+
+                std::cout << "Attempting to Write response: " << response << std::endl;
                 write(sd2, response.c_str(), response.size());
             }
             

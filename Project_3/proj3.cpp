@@ -24,6 +24,7 @@ Description: IPv4 format checker
 #include <sstream>
 #include <map>
 #include <array>
+#include <set>
 
 #define REQUIRED_ARGC 6
 #define PORT_POS 1
@@ -35,6 +36,8 @@ Description: IPv4 format checker
 #define METHOD_POS 0
 #define TARGET_POS 1 
 #define PROTOCOL_VERS_POS 2
+
+std::set<std::string> SUPPORTED_METHODS = {"GET", "SHUTDOWN"};
 
 int usage (std::string progname)
 {
@@ -65,17 +68,26 @@ int errexit (std::string format, std::string arg)
 // Function to send a "400 Malformed Request" response
 void sendMalformedResponse() {
     std::cout << "HTTP/1.1 400 Malformed Request\r\n\r\n";
+    exit(ERROR);
 }
+
+// Function to send a "405 Unsupported Method" resposne
+void unsupportedProtocolResponse() {
+    std::cout << "HTTP/1.1 501 Protocol Not Implemented\r\n\r\n";
+    exit(ERROR);
+}
+
+// Function to send a "405 Unsupported Method" resposne
+void unsupportedMethodResponse() {
+    std::cout << "HTTP/1.1 405 Unsupported Method\r\n\r\n";
+    exit(ERROR);
+}
+
 
 //returns array that has 
 //method at 0
 //url at 1
 //http version at 2
-#include <iostream>
-#include <sstream>
-#include <array>
-#include <string>
-#include <map>
 
 std::array<std::string, 3> parseHTTPRequest(char buffer[], size_t bufferSize) {
     std::istringstream requestStream(std::string(buffer, bufferSize));
@@ -99,6 +111,48 @@ std::array<std::string, 3> parseHTTPRequest(char buffer[], size_t bufferSize) {
             std::string headerValue = line.substr(colon + 2); // Skip ": "
             headers[headerName] = headerValue;
         }
+    }
+
+    // check to see if /r/n are at each line ending
+    int i = 0;
+    bool new_line = false;
+    bool r_triggered = false;
+    bool final_line_bit = false;
+    while(buffer[i] != '\0'){
+        char value = buffer[i];
+        if(new_line == true){
+            if(value=='\r' && buffer[i+1] == '\n'){
+                final_line_bit = true;
+            }
+        }
+        else{
+            new_line = false;
+        }
+        if(value == '\r'){
+            r_triggered = true;
+        }
+        else if(r_triggered == true && value == '\n'){
+            new_line = true;
+            r_triggered = false;
+        }
+        else if(r_triggered == true && value != '\n'){
+            sendMalformedResponse();
+        }
+        i++;
+    }
+    if(final_line_bit == false){
+        std::cout << "final carriage bit missing" << std::endl;
+        sendMalformedResponse();
+    }
+
+    //version
+    if(httpVersion.find("HTTP/") == std::string::npos){
+        unsupportedProtocolResponse();
+    }
+
+        //check approve method
+    if(SUPPORTED_METHODS.find(method) == SUPPORTED_METHODS.end()){
+        unsupportedMethodResponse();
     }
 
     // parse the body if present

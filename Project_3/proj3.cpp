@@ -101,6 +101,7 @@ std::string readFile(const std::string& filepath) {
 
 void respondToClient(std::string mesg, int sd){
         write (sd, mesg.c_str(), sizeof(mesg));
+        close(sd);
 }
 
 

@@ -26,6 +26,7 @@ Description: IPv4 format checker
 #include <array>
 #include <set>
 #include <filesystem>
+#include <fstream>
 
 #define REQUIRED_ARGC 6
 #define PORT_POS 1
@@ -97,6 +98,17 @@ bool fileExists(const std::string& filename) {
     return std::filesystem::exists(filename);
 }
 
+// Function to read the content of a file
+std::string readFile(const std::string& filepath) {
+    std::ifstream file(filepath);
+    if (!file.is_open()) {
+        return "";  // Return empty string if the file could not be opened
+    }
+
+    std::string content((std::istreambuf_iterator<char>(file)),
+                        (std::istreambuf_iterator<char>()));
+    return content;
+}
 
 //returns array that has 
 //method at 0
@@ -332,19 +344,20 @@ int main (int argc, char *argv [])
         }
 
         std::string filepath = rootDirectory + argument;
-        std::cout <<"Looking for " <<  filepath << std::endl;
+        
         if(fileExists(filepath) == false){
             std::string notFoundResponse = "HTTP/1.1 404 File Not Found\r\n\r\n";
-            std::cout << "trying to send 404 response";
             write(sd2, notFoundResponse.c_str(), notFoundResponse.size());
             return 0;
         }
+        
+        std::string fileContent = readFile(filepath);
 
+        std::string response = "HTTP/1.1 200 OK \r\n\r\n";
+        
+        response+= fileContent;
+        write(sd2, response.c_str(), response.size());
     }
-
-    /* write message to the connection */
-    if (write (sd2,argv [MSG_POS],strlen (argv [MSG_POS])) < 0)
-        errexit ("error writing message: %s", argv [MSG_POS]);
 
     /* close connections and exit */
     close (sd);

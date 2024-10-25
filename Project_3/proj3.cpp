@@ -27,6 +27,7 @@ Description: IPv4 format checker
 #include <set>
 #include <filesystem>
 #include <fstream>
+#include <algorithm>
 
 #define REQUIRED_ARGC 6
 #define PORT_POS 1
@@ -349,11 +350,21 @@ int main (int argc, char *argv [])
                 response+= fileContent;
 
                 std::cout << "Attempting to Write response: " << response << std::endl;
-                while(true){
-                    if(response.empty()){
+
+                size_t bytesSent = 0;
+                while(bytesSent < response.size()){
+                    
+                    //determine the size of the next chunk to send
+                    size_t chunkSize = std::min(static_cast<size_t>(BUFLEN), sizeof(response) - bytesSent);
+
+                    //send chunk
+                    ssize_t result = write(sd2, response.c_str() + bytesSent, chunkSize);
+
+                    if(result < 0){
+                        std::cerr << "Error writing to socket \n";
                         break;
                     }
-                    write(sd2, response.c_str(), response.size());
+                    bytesSent+=result;
                 }
                 close(sd2);
             }

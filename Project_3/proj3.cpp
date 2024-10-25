@@ -353,7 +353,7 @@ int main (int argc, char *argv [])
         
         std::string fileContent = readFile(filepath);
 
-        std::string response = "HTTP/1.1 200 OK \r\n\r\n";
+        std::string response = "HTTP/1.1 200 OK\r\n\r\n";
         
         response+= fileContent;
         write(sd2, response.c_str(), response.size());

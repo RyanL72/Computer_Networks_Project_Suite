@@ -332,9 +332,9 @@ int main (int argc, char *argv [])
 
         //parse requeset
         std::array<std::string, 3> requestInfo = parseHTTPRequest(buffer, BUFLEN);
-        // std::cout << "Method: " << requestInfo[0] << std::endl;
-        // std::cout << "Argument": " << requestInfo[1] << std::endl;
-        // std::cout << "HTTP Version: " << requestInfo[2] << std::endl;
+        std::cout << "Method: " << requestInfo[0] << std::endl;
+        std::cout << "Argument: " << requestInfo[1] << std::endl;
+        std::cout << "HTTP Version: " << requestInfo[2] << std::endl;
         
         if(requestInfo[METHOD_POS] == "GET"){
             std::string argument = requestInfo[ARGUMENT_POS];

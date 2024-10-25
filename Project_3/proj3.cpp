@@ -2,7 +2,7 @@
 Author: Ryan Lin
 CaseID: rhl72
 File name: proj3.cpp
-Date: 10-21-2024
+Date: 10-25-2024
 Description: Webserver 
 */
 
@@ -48,11 +48,15 @@ const std::string unsupportedProtocolResponse = "HTTP/1.1 501 Protocol Not Imple
 
 const std::string unsupportedMethodResponse = "HTTP/1.1 405 Unsupported Method\r\n\r\n";
 
-const std::string invalidFilenameResponse = "HTTP/1.1 406 Invalid Filenames\r\n\r\n";
+const std::string invalidFilenameResponse = "HTTP/1.1 406 Invalid Filename\r\n\r\n";
 
 const std::string notFoundResponse = "HTTP/1.1 404 File Not Found\r\n\r\n";
 
 const std::string successMessage = "HTTP/1.1 200 OK\r\n\r\n";
+
+const std::string successShutdownMessage = "HTTP/1.1 200 Server Shutting Down\r\n\r\n";
+
+const std::string forbiddenOperationMessage = "HTTP/1.1 403 Operation Forbidden\r\n\r\n";
 
 std::set<std::string> SUPPORTED_METHODS = {"GET", "SHUTDOWN"};
 
@@ -70,7 +74,7 @@ int badArgumentValues(std::string message="Bad Argument Value Error"){
 
 int ArgumentValidation(int port, std::string root, std::string token){
     if(port <= 1024 || port >= 65536){
-    badArgumentValues("Port Numbers less than 1024 are reserved.");
+    badArgumentValues("Port Numbers less than 1024 are reserved and are limited to the maximum of 65535.");
     }
     return 0;
 }
@@ -178,7 +182,7 @@ std::array<std::string, 3> parseHTTPRequest(char buffer[], size_t bufferSize, in
     // parse the body if present
     std::string body;
     if (std::getline(requestStream, body)) {
-        std::cout << "Body: " << body << std::endl;
+        //std::cout << "Body: " << body << std::endl;
     }
 
     // return the array containing method, URL, and HTTP version
@@ -226,9 +230,9 @@ int main (int argc, char *argv [])
         }
     }
     //check to see if all the port, root directory, and terminate token were provided
-    std::cout << portNumber << std::endl;
-    std::cout << rootDirectory << std::endl;
-    std::cout << terminationToken << std::endl;
+    //std::cout << portNumber << std::endl;
+    //std::cout << rootDirectory << std::endl;
+    //std::cout << terminationToken << std::endl;
     
     //handle missing things
     if(portNumber == -1 || rootDirectory.empty() || terminationToken.empty() ){
@@ -242,7 +246,7 @@ int main (int argc, char *argv [])
     if ((protoinfo = getprotobyname (PROTOCOL)) == NULL)
         errexit ("cannot find protocol information for ", PROTOCOL);
     
-    std::cout << "Protocol: " << protoinfo->p_name << "\n" << "Number: " << protoinfo->p_proto << std::endl;
+    //std::cout << "Protocol: " << protoinfo->p_name << "\n" << "Number: " << protoinfo->p_proto << std::endl;
 
     /* setup endpoint info */
 
@@ -290,7 +294,7 @@ int main (int argc, char *argv [])
             errexit ("error accepting connection", NULL);
 
         //see what request looks like
-        std::cout << "Request Accepted with sd2: " << sd2 << std::endl;
+        //std::cout << "Request Accepted with sd2: " << sd2 << std::endl;
         
         char buffer[BUFLEN]; 
         memset(buffer, 0, sizeof(buffer));  
@@ -302,15 +306,15 @@ int main (int argc, char *argv [])
         } else {
             // Null-terminate the buffer to treat it as a string
             buffer[bytesReceived] = '\0';
-            std::cout << "Client Message: " << buffer << std::endl;
+            //std::cout << "Client Message: " << buffer << std::endl;
         }
 
         //parse requeset
         std::array<std::string, 3> requestInfo = parseHTTPRequest(buffer, BUFLEN, sd2);
 
-        std::cout << "Method: " << requestInfo[0] << std::endl;
-        std::cout << "Argument: " << requestInfo[1] << std::endl;
-        std::cout << "HTTP Version: " << requestInfo[2] << std::endl;
+        // std::cout << "Method: " << requestInfo[0] << std::endl;
+        // std::cout << "Argument: " << requestInfo[1] << std::endl;
+        // std::cout << "HTTP Version: " << requestInfo[2] << std::endl;
         
         if(requestInfo[METHOD_POS] == "GET"){
             std::string argument = requestInfo[ARGUMENT_POS];
@@ -318,7 +322,7 @@ int main (int argc, char *argv [])
                 respondToClient(invalidFilenameResponse ,sd2);
             }
             if(argument == "/"){
-                argument = "./index.html";
+                argument = "/index.html";
             }
 
             std::string filepath = rootDirectory + argument;
@@ -333,7 +337,7 @@ int main (int argc, char *argv [])
                 
                 response+= fileContent;
 
-                std::cout << "Attempting to Write response: " << response << std::endl;
+                //std::cout << "Attempting to Write response: " << response << std::endl;
 
                 size_t bytesSent = 0;
                 while(bytesSent < response.size()){
@@ -356,11 +360,13 @@ int main (int argc, char *argv [])
         }
         else if(requestInfo[METHOD_POS] == "SHUTDOWN"){
             if(requestInfo[ARGUMENT_POS] == terminationToken){
-                std::string response = "HTTP/1.1 200 Server Shutting Down\r\n\r\n";
-                write(sd2, response.c_str(), response.size());
+                respondToClient(successShutdownMessage, sd2);
                 close(sd);
                 close(sd2);
                 exit(0);
+            }
+            else{
+                respondToClient(forbiddenOperationMessage, sd2);
             }
         }
     }

@@ -25,6 +25,7 @@ Description: IPv4 format checker
 #include <map>
 #include <array>
 #include <set>
+#include <filesystem>
 
 #define REQUIRED_ARGC 6
 #define PORT_POS 1
@@ -36,6 +37,9 @@ Description: IPv4 format checker
 #define METHOD_POS 0
 #define TARGET_POS 1 
 #define PROTOCOL_VERS_POS 2
+#define METHOD_POS 0
+#define ARGUMENT_POS 1
+#define HTTP_VERSION_POS 2
 
 std::set<std::string> SUPPORTED_METHODS = {"GET", "SHUTDOWN"};
 
@@ -81,6 +85,16 @@ void unsupportedProtocolResponse() {
 void unsupportedMethodResponse() {
     std::cout << "HTTP/1.1 405 Unsupported Method\r\n\r\n";
     exit(ERROR);
+}
+
+//Function to send a " “HTTP/1.1 406 Invalid Filename\r\n\r\n”"
+void invalidFilenameResponse(){
+    std::cout << "HTTP/1.1 406 Invalid Filenames\r\n\r\n";
+    exit(ERROR);
+}
+
+bool fileExists(const std::string& filename) {
+    return std::filesystem::exists(filename);
 }
 
 
@@ -264,21 +278,21 @@ int main (int argc, char *argv [])
         errexit ("cannot listen on port %s\n", std::to_string(portNumber));
 
     //check point
-    if (protoinfo != NULL) {
-        std::cout << "Protocol Name: " << protoinfo->p_name << std::endl;
-        std::cout << "Protocol Number: " << protoinfo->p_proto << std::endl;
-    } else {
-        std::cerr << "Protocol information is missing!" << std::endl;
-    }
-    std::cout << "Socket Family: " << sin.sin_family << std::endl;
-    std::cout << "Socket Address: " << inet_ntoa(sin.sin_addr) << std::endl;  // converts the address to string form
-    std::cout << "Socket Port: " << ntohs(sin.sin_port) << std::endl;  // converts back from network byte order
-    std::cout << "Socket Descriptor: " << sd << std::endl;
-    if (listen(sd, QLEN) == 0) {
-    std::cout << "Server is now listening on port: " << portNumber << std::endl;
-    } else {
-        std::cerr << "Failed to listen on port: " << portNumber << std::endl;
-    }
+    // if (protoinfo != NULL) {
+    //     std::cout << "Protocol Name: " << protoinfo->p_name << std::endl;
+    //     std::cout << "Protocol Number: " << protoinfo->p_proto << std::endl;
+    // } else {
+    //     std::cerr << "Protocol information is missing!" << std::endl;
+    // }
+    // std::cout << "Socket Family: " << sin.sin_family << std::endl;
+    // std::cout << "Socket Address: " << inet_ntoa(sin.sin_addr) << std::endl;  // converts the address to string form
+    // std::cout << "Socket Port: " << ntohs(sin.sin_port) << std::endl;  // converts back from network byte order
+    // std::cout << "Socket Descriptor: " << sd << std::endl;
+    // if (listen(sd, QLEN) == 0) {
+    // std::cout << "Server is now listening on port: " << portNumber << std::endl;
+    // } else {
+    //     std::cerr << "Failed to listen on port: " << portNumber << std::endl;
+    // }
 
     /* accept a connection */
     addrlen = sizeof (addr);
@@ -304,10 +318,29 @@ int main (int argc, char *argv [])
 
     //parse requeset
     std::array<std::string, 3> requestInfo = parseHTTPRequest(buffer, BUFLEN);
-    std::cout << "Method: " << requestInfo[0] << std::endl;
-    std::cout << "URL: " << requestInfo[1] << std::endl;
-    std::cout << "HTTP Version: " << requestInfo[2] << std::endl;
-    exit (0);
+    // std::cout << "Method: " << requestInfo[0] << std::endl;
+    // std::cout << "Argument": " << requestInfo[1] << std::endl;
+    // std::cout << "HTTP Version: " << requestInfo[2] << std::endl;
+    
+    if(requestInfo[METHOD_POS] == "GET"){
+        std::string argument = requestInfo[ARGUMENT_POS];
+        if(argument[0] != '/'){
+            invalidFilenameResponse();
+        }
+        if(argument == "/"){
+            argument = "./index.html";
+        }
+
+        std::string filepath = rootDirectory + argument;
+        std::cout <<"Looking for " <<  filepath << std::endl;
+        if(fileExists(filepath) == false){
+            std::string notFoundResponse = "HTTP/1.1 404 File Not Found\r\n\r\n";
+            std::cout << "trying to send 404 response";
+            write(sd2, notFoundResponse.c_str(), notFoundResponse.size());
+            return 0;
+        }
+
+    }
 
     /* write message to the connection */
     if (write (sd2,argv [MSG_POS],strlen (argv [MSG_POS])) < 0)

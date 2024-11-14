@@ -22,24 +22,22 @@ Description: Packet Trace Analyzer
 #include "next.h"
 #include <string>
 
-using std::string;
-using namespace std;
-
 #define INFORMATION_MODE 1
 #define SIZE_ANALYSIS_MODE 2
 #define TCP_PACKET_PRINTING_MODE 3
 #define TRAFFIC_MATRIX_MODE 4
 #define ERROR 1
+#define MISSING_FILE_NAME_MSG "File name not specified"
+#define ONE_MODE_MSG "Must specify one mode."
 
-void errexit (char *msg) {
-    fprintf(stdout, "%s\n", msg);
+void errexit(std::string msg) {
+    std::cerr << msg << std::endl;
     exit(1);
 }
 
-int usage (string progname) {
+int usage (std::string progname) {
     std::cout << progname << " is an unknown option, please use the format: \n" 
-              << "./proj4 -r <Trace File_name> -r <Root directory> -t <Terminate token>" 
-              << std::endl;
+              << "./proj4 -r <Trace File_name> -i | -t | -s | -m" << std::endl;
     exit(ERROR);
 }
 
@@ -50,10 +48,10 @@ unsigned short next_packet (int fd, struct pkt_info *pinfo) {
     memset(pinfo, 0x0, sizeof(struct pkt_info));
     memset(&meta, 0x0, sizeof(struct meta_info));
 
-    bytes_read = read(fd, &meta, sizeof(meta));
+    bytes_read = read(fd, &meta, int(sizeof(meta)));
     if (bytes_read == 0)
         return (0);
-    if (bytes_read < sizeof(meta))
+    if (bytes_read < int(sizeof(meta)))
         errexit("cannot read meta information");
     pinfo->caplen = ntohs(meta.caplen);
 
@@ -67,7 +65,7 @@ unsigned short next_packet (int fd, struct pkt_info *pinfo) {
         errexit("error reading packet");
     if (bytes_read < pinfo->caplen)
         errexit("unexpected end of file encountered");
-    if (bytes_read < sizeof(struct ether_header))
+    if (bytes_read < int(sizeof(struct ether_header)))
         return (1);
 
     pinfo->ethh = (struct ether_header *)pinfo->pkt;
@@ -81,15 +79,20 @@ unsigned short next_packet (int fd, struct pkt_info *pinfo) {
 }
 
 int main(int argc, char *argv[]) {
-    if (argc < 2) {
-        usage(argv[0]);
+
+    int mode;
+    std::string fileName;
+
+    if(argc > 4){
+        // for (int i = 0; i < argc; ++i) {
+        //     std::cout << "Argument " << i << ": " << argv[i] << std::endl;
+        // }
+        // return -1;
+        usage(ONE_MODE_MSG);
     }
 
-    char mode = 0;
-    string fileName;
-
     int opt;
-    while((opt = getopt(argc, argv, "ristm")) != -1) {
+    while((opt = getopt(argc, argv, "r:istm")) != -1) {
         switch(opt) {
             case 'r':
                 fileName = optarg;
@@ -112,7 +115,11 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    cout << mode << endl;
+    if(fileName.empty()){
+        usage(MISSING_FILE_NAME_MSG);
+    }
+
+    std::cout << "Mode " << mode << " with argc: " << argc << std::endl;
 
     // int fd = open(fileName.c_str(), O_RDONLY);
     // if (fd < 0) {

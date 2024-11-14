@@ -1,6 +1,8 @@
-CXX = g++  # Specify the C++ compiler
-CFLAGS = -g -Wall -Werror -std=c++17  # Add -std=c++17 to use C++17 standard
-LDFLAGS = -lstdc++fs  # Add this flag if your compiler needs it to link filesystem
+CC = g++  
+CXX = g++
+LD=g++
+CFLAGS = -g -Wall -Werror
+LDFLAGS =$(CFLAGS)  
 
 TARGET = proj4
 

@@ -37,7 +37,7 @@ void errexit(std::string msg) {
 
 int usage (std::string progname) {
     std::cout << progname << " is an unknown option, please use the format: \n" 
-              << "./proj4 -r <Trace File_name> -i | -t | -s | -m" << std::endl;
+              << "./proj4 -r <Trace File_name> -i|-t|-s|-m" << std::endl;
     exit(ERROR);
 }
 
@@ -121,20 +121,20 @@ int main(int argc, char *argv[]) {
 
     std::cout << "Mode " << mode << " with argc: " << argc << std::endl;
 
-    // int fd = open(fileName.c_str(), O_RDONLY);
-    // if (fd < 0) {
-    //     perror("Error opening file");
-    //     return 1;
-    // }
+    int fd = open(fileName.c_str(), O_RDONLY);
+    if (fd < 0) {
+        perror("Error opening file");
+        return 1;
+    }
 
-    // struct pkt_info pinfo;
-    // while (next_packet(fd, &pinfo)) {
-    //     printf("Packet length: %u\n", pinfo.caplen);
-    //     if (pinfo.ethh != NULL && pinfo.ethh->ether_type == ETHERTYPE_IP) {
-    //         printf("This packet contains an IP header.\n");
-    //     }
-    // }
+    struct pkt_info pinfo;
+    while (next_packet(fd, &pinfo)) {
+        printf("Packet length: %u\n", pinfo.caplen);
+        if (pinfo.ethh != NULL && pinfo.ethh->ether_type == ETHERTYPE_IP) {
+            printf("This packet contains an IP header.\n");
+        }
+    }
 
-    // close(fd);
+    close(fd);
     return 0;
 }

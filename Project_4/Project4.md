@@ -16,12 +16,7 @@ A `Trace Packet` is a data file that captures network traffic by recording each 
     - `-t` is `tcp packet tracing mode `
     - `-m` is `traffic matrix mode`
 
-```bash
-./proj4 -r trace_file 
-```
-
 ## Cleanup
----
 
 ```bash
 chmod +x extract_samples.sh cleanup_samples.sh

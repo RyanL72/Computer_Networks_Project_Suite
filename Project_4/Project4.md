@@ -2,7 +2,7 @@
 ---
 A `Trace Packet` is a data file that captures network traffic by recording each packet transmitted across a data link.
 
-## Using
+## Running theh Packet Trace Analyzer
 
 `proj4` must be run like this
 
@@ -11,4 +11,24 @@ A `Trace Packet` is a data file that captures network traffic by recording each 
 ```
 - `-r` is `required` and specifies the `name of the packet`
 - `One` and `only One` Mode must be specified
-    - `-i` is `info  
+    - `-i` is `trace info mode`
+    - `-s` is `size analysis mode`
+    - `-t` is `tcp packet tracing mode `
+    - `-m` is `traffic matrix mode`
+
+```bash
+./proj4 -r trace_file 
+```
+
+## Cleanup
+---
+
+```bash
+chmod +x extract_samples.sh cleanup_samples.sh
+```
+```bash
+./extract_samples.sh
+```
+```bash
+./cleanup_samples.sh
+```

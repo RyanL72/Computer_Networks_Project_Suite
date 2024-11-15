@@ -121,8 +121,8 @@ int main(int argc, char *argv[]) {
     }
 
     std::cout << "Mode " << mode << " with argc: " << argc << std::endl;
-
-
+    
+    int fd;
     // Open the file
     std::ifstream file(fileName);
     if (!file.is_open()) {
@@ -130,11 +130,15 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    // Read the file line by line
-    std::string line;
-    while (std::getline(file, line)) {
-        std::cout << line << std::endl;  // Print each line
+    if(mode == INFORMATION_MODE){
+
+        // Read the file line by line
+        std::string line;
+        while (std::getline(file, line)) {
+            std::cout << line << std::endl;  // Print each line
+        }
     }
+    
 
     // Close the file
     file.close();

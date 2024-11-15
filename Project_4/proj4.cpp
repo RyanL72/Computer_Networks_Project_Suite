@@ -116,42 +116,33 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    if(fileName.empty()){
+    if (fileName.empty()) {
         usage(MISSING_FILE_NAME_MSG);
     }
 
     std::cout << "Mode " << mode << " with argc: " << argc << std::endl;
-    
-    int fd;
-    // Open the file
-    std::ifstream file(fileName);
-    if (!file.is_open()) {
-        std::cerr << "Error opening file: " << fileName << std::endl;
+
+    // Open the file using a low-level file descriptor for packet processing
+    int fd = open(fileName.c_str(), O_RDONLY);
+    if (fd < 0) {
+        perror("Error opening file");
         return 1;
     }
 
-    if(mode == INFORMATION_MODE){
+    if (mode == INFORMATION_MODE) {
+        struct pkt_info pinfo;
 
-        // Read the file line by line
-        std::string line;
-        while (std::getline(file, line)) {
-            std::cout << line << std::endl;  // Print each line
-        }
-    }
-    
-
-    // Close the file
-    file.close();
-    return 0;
-
-    struct pkt_info pinfo;
-    while (next_packet(fd, &pinfo)) {
-        printf("Packet length: %u\n", pinfo.caplen);
-        if (pinfo.ethh != NULL && pinfo.ethh->ether_type == ETHERTYPE_IP) {
-            printf("This packet contains an IP header.\n");
+        // Process packets using `next_packet`
+        while (next_packet(fd, &pinfo)) {
+            printf("Packet length: %u\n", pinfo.caplen);
+            if (pinfo.ethh != NULL && pinfo.ethh->ether_type == ETHERTYPE_IP) {
+                printf("This packet contains an IP header.\n");
+            }
         }
     }
 
+    // Close the file descriptor
     close(fd);
-    return 0;
+
+    return 0;    
 }

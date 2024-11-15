@@ -21,6 +21,7 @@ Description: Packet Trace Analyzer
 #include <iostream>
 #include "next.h"
 #include <string>
+#include <fstream>
 
 #define INFORMATION_MODE 1
 #define SIZE_ANALYSIS_MODE 2
@@ -121,11 +122,23 @@ int main(int argc, char *argv[]) {
 
     std::cout << "Mode " << mode << " with argc: " << argc << std::endl;
 
-    int fd = open(fileName.c_str(), O_RDONLY);
-    if (fd < 0) {
-        perror("Error opening file");
+
+    // Open the file
+    std::ifstream file(fileName);
+    if (!file.is_open()) {
+        std::cerr << "Error opening file: " << fileName << std::endl;
         return 1;
     }
+
+    // Read the file line by line
+    std::string line;
+    while (std::getline(file, line)) {
+        std::cout << line << std::endl;  // Print each line
+    }
+
+    // Close the file
+    file.close();
+    return 0;
 
     struct pkt_info pinfo;
     while (next_packet(fd, &pinfo)) {

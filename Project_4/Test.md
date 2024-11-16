@@ -30,3 +30,8 @@
 ```
 ./run_project.sh wacky.trace -s wacky-s.out
 ```
+
+# TCP Mode
+```bash
+/run_project.sh wacky.trace -t wacky-t.out
+```

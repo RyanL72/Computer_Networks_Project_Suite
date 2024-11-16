@@ -184,6 +184,9 @@ int main(int argc, char *argv[]) {
         printf("%s %.6f %.6f %d %d\n", fileName.c_str(), first_time, last_time - first_time, total_pkts, IP_pkts);
     }
     else if (mode == SIZE_ANALYSIS_MODE) {
+
+        //more advanced filtering required. Not sure why some packets are unskipped
+
         struct pkt_info pinfo;
         while (next_packet(fd, &pinfo)) {
             // Ethernet and if minimum length is satisfied
@@ -237,11 +240,54 @@ int main(int argc, char *argv[]) {
 
 
             // Print Row
-            std::cout << std::fixed << std::setprecision(6) << packet_time << " " << caplen << " "
-                    << ip_len << " " << ihl << " " << protocolChar << " " << trans_hl << " " << payload << std::endl;
+            std::cout << std::fixed << std::setprecision(6) << packet_time << " " << caplen << " " << ip_len << " " << ihl << " " << protocolChar << " " << trans_hl << " " << payload << std::endl;
         }
     }
+    else if (mode == TCP_PACKET_PRINTING_MODE) {
+        struct pkt_info pinfo;
 
+        while (next_packet(fd, &pinfo)) {
+            // Ensure the packet has an Ethernet header
+            if (pinfo.ethh == NULL) {
+                continue; // Skip packets without Ethernet headers
+            }
+
+            // Ensure the packet is IPv4
+            if (pinfo.iph == NULL) {
+                continue; // Skip non-IPv4 packets
+            }
+
+            // Ensure the protocol is TCP
+            if (pinfo.iph->protocol != IPPROTO_TCP) {
+                continue; // Skip non-TCP packets
+            }
+
+            // Ensure the packet has a TCP header
+            if (pinfo.tcph == NULL) {
+                continue; // Skip packets without TCP headers
+            }
+
+            // Extract timestamp
+            double timestamp = pinfo.now;
+
+            // Extract IPv4 information
+            std::string src_ip = inet_ntoa(*(struct in_addr *)&pinfo.iph->saddr);
+            std::string dst_ip = inet_ntoa(*(struct in_addr *)&pinfo.iph->daddr);
+            unsigned int ip_ttl = pinfo.iph->ttl;                // Time to Live
+            unsigned int ip_id = ntohs(pinfo.iph->id);           // IP Identification
+
+            // Extract TCP information
+            unsigned int src_port = ntohs(pinfo.tcph->source);   // Source Port
+            unsigned int dst_port = ntohs(pinfo.tcph->dest);     // Destination Port
+            bool syn_flag = pinfo.tcph->syn;                     // SYN Flag
+            std::string syn = syn_flag ? "Y" : "N";              // SYN Status
+            unsigned int window = ntohs(pinfo.tcph->window);     // TCP Window Size
+            unsigned int seqno = ntohl(pinfo.tcph->seq);         // TCP Sequence Number
+
+            // Print packet information
+            std::cout << std::fixed << std::setprecision(6) << timestamp << " " << src_ip << " " << src_port << " " << dst_ip  << " " << dst_port << " " << ip_ttl << " " << ip_id << " " << syn << " " << window << " " << seqno << std::endl;
+        }
+    }
 
     close(fd);
 

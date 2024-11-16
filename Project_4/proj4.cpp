@@ -183,64 +183,65 @@ int main(int argc, char *argv[]) {
         // Output the summary in the required format
         printf("%s %.6f %.6f %d %d\n", fileName.c_str(), first_time, last_time - first_time, total_pkts, IP_pkts);
     }
-    else if(mode == SIZE_ANALYSIS_MODE){
+    else if (mode == SIZE_ANALYSIS_MODE) {
         struct pkt_info pinfo;
         while (next_packet(fd, &pinfo)) {
-            //Ethernet and IPV4 Header Check
-            if(pinfo.ethh == NULL){
-                continue;
+            // Ethernet and if minimum length is satisfied
+            if (pinfo.ethh == NULL ) {
+                continue; // Skip packets without Ethernet headers
             }
 
-            //Time Stamp
+            // Time Stamp
             double packet_time = pinfo.now;
 
-            //Caplen
-            unsigned int caplen = pinfo.caplen; 
+            // Captured Length
+            unsigned int caplen = pinfo.caplen;
 
-            if(pinfo.iph == NULL){
-                std::cout << std::fixed << std::setprecision(6) << packet_time << " " << caplen << " - - - - -" << std::endl; 
+            if (pinfo.iph == NULL) {
+                std::cout << std::fixed << std::setprecision(6) << packet_time << " " << caplen << " - - - - -" << std::endl;
                 continue;
             }
 
-            //IPV4 Packet Length
+            // IPv4 Packet Length
             unsigned int ip_len = ntohs(pinfo.iph->tot_len);
 
-            //IPv4 Header Length (in bytes)
-            unsigned int ihl = pinfo.iph->ihl*4;
+            // IPv4 Header Length (in bytes)
+            unsigned int ihl = pinfo.iph->ihl * 4;
 
-            //Protocol, Protocolheader length and Payload
+            // Protocol, Transport Header Length, and Payload
             int protocol = pinfo.iph->protocol;
             char protocolChar;
-            unsigned int trans_hl;
-            unsigned int payload;
-            if(protocol == TCP){
+            std::string trans_hl = "-";
+            std::string payload = "-";
+
+            if (protocol == TCP) {
                 protocolChar = 'T';
-                if(pinfo.tcph == NULL){
-                    continue;
+                if (pinfo.tcph != NULL) {
+                    trans_hl = std::to_string(pinfo.tcph->doff * 4);
+                    payload = std::to_string(ip_len - ihl - (pinfo.tcph->doff * 4));
+                } else {
+                    trans_hl = "-";
+                    payload = "-";
                 }
-                trans_hl = pinfo.tcph->doff*4;
-                payload = ip_len - ihl - trans_hl;
-            }
-            else if(protocol == UDP){
+            } 
+            else if (protocol == UDP) {
                 protocolChar = 'U';
-                trans_hl = UDP_HEADER_LEN;
-                payload = ip_len - ihl - trans_hl;
-            }
-            else{
+                trans_hl = std::to_string(UDP_HEADER_LEN);
+                payload = std::to_string(ip_len - ihl - UDP_HEADER_LEN);
+            } 
+            else {
                 protocolChar = '?';
-                std::cout << std::fixed << std::setprecision(6) << packet_time  << " "<< caplen << " " << ip_len << " " << ihl << " "<< protocolChar << " "<< protocolChar << " "<< protocolChar <<std::endl;
-                continue;
-                
+                trans_hl = "?";
+                payload = "?";
             }
 
-            
 
-
-            //Print Row
-            std::cout << std::fixed << std::setprecision(6) << packet_time  << " "<< caplen << " " << ip_len << " " << ihl << " "<< protocolChar << " "<< trans_hl << " " << payload << std::endl;
-
+            // Print Row
+            std::cout << std::fixed << std::setprecision(6) << packet_time << " " << caplen << " "
+                    << ip_len << " " << ihl << " " << protocolChar << " " << trans_hl << " " << payload << std::endl;
         }
     }
+
 
     close(fd);
 

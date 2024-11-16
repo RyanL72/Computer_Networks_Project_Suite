@@ -33,5 +33,10 @@
 
 # TCP Mode
 ```bash
-/run_project.sh wacky.trace -t wacky-t.out
+./run_project.sh wacky.trace -t wacky-t.out
+```
+
+# Map Mode
+```bash
+./run_project.sh wacky.trace -m wacky-m.out
 ```

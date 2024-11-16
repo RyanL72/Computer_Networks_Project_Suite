@@ -26,3 +26,7 @@
 ./run_project.sh wacky.trace -i wacky-i.out
 ```
 
+# Size Mode
+```
+./run_project.sh wacky.trace -s wacky-s.out
+```

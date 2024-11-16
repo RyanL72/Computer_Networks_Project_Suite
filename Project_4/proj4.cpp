@@ -23,6 +23,7 @@ Description: Packet Trace Analyzer
 #include <string>
 #include <fstream>
 #include <arpa/inet.h>
+#include <iomanip> 
 
 #define INFORMATION_MODE 1
 #define SIZE_ANALYSIS_MODE 2
@@ -31,6 +32,9 @@ Description: Packet Trace Analyzer
 #define ERROR 1
 #define MISSING_FILE_NAME_MSG "Error: You must specify a trace file using the -r option."
 #define ONE_MODE_MSG "Must specify one mode."
+#define TCP 6
+#define UDP 17
+#define UDP_HEADER_LEN 8
 
 void errexit(std::string msg) {
     std::cerr << msg << std::endl;
@@ -148,14 +152,13 @@ int main(int argc, char *argv[]) {
         usage(MISSING_FILE_NAME_MSG);
     }
 
-    // std::cout << "Mode " << mode << " with argc: " << argc << std::endl;
-
     // Open the file using a low-level file descriptor for packet processing
     int fd = open(fileName.c_str(), O_RDONLY);
     if (fd < 0) {
         perror("Error opening file");
         exit(1);
     }
+
     if (mode == INFORMATION_MODE) {
         double first_time = 0.0, last_time = 0.0;
         int total_pkts = 0, IP_pkts = 0;
@@ -168,62 +171,6 @@ int main(int argc, char *argv[]) {
             double packet_time = pinfo.now;
             if (total_pkts == 1) {
                 first_time = packet_time;
-
-                // // Print all attributes of the first packet
-                // printf("First Packet Attributes:\n");
-                // printf("  Timestamp (now): %.6f seconds\n", pinfo.now);
-                // printf("  Captured Length (caplen): %u bytes\n", pinfo.caplen);
-
-                // // Print Ethernet header details if present
-                // if (pinfo.ethh != NULL) {
-                //     printf("  Ethernet Header:\n");
-                //     printf("    Destination MAC: %02x:%02x:%02x:%02x:%02x:%02x\n",
-                //         pinfo.ethh->ether_dhost[0], pinfo.ethh->ether_dhost[1],
-                //         pinfo.ethh->ether_dhost[2], pinfo.ethh->ether_dhost[3],
-                //         pinfo.ethh->ether_dhost[4], pinfo.ethh->ether_dhost[5]);
-                //     printf("    Source MAC: %02x:%02x:%02x:%02x:%02x:%02x\n",
-                //         pinfo.ethh->ether_shost[0], pinfo.ethh->ether_shost[1],
-                //         pinfo.ethh->ether_shost[2], pinfo.ethh->ether_shost[3],
-                //         pinfo.ethh->ether_shost[4], pinfo.ethh->ether_shost[5]);
-                //     printf("    Ether Type: 0x%04x\n", pinfo.ethh->ether_type);
-                // } else {
-                //     printf("  Ethernet Header: Not Present\n");
-                // }
-
-                // // Print IP header details if present
-                // if (pinfo.iph != NULL) {
-                //     printf("  IP Header:\n");
-                //     printf("    Source IP: %s\n", inet_ntoa(*(struct in_addr *)&pinfo.iph->saddr));
-                //     printf("    Destination IP: %s\n", inet_ntoa(*(struct in_addr *)&pinfo.iph->daddr));
-                //     printf("    Protocol: %u\n", pinfo.iph->protocol);
-                //     printf("    Total Length: %u bytes\n", ntohs(pinfo.iph->tot_len));
-                //     printf("    Time to Live (TTL): %u\n", pinfo.iph->ttl);
-                // } else {
-                //     printf("  IP Header: Not Present\n");
-                // }
-
-                // // Print TCP header details if present
-                // if (pinfo.tcph != NULL) {
-                //     printf("  TCP Header:\n");
-                //     printf("    Source Port: %u\n", ntohs(pinfo.tcph->source));
-                //     printf("    Destination Port: %u\n", ntohs(pinfo.tcph->dest));
-                //     printf("    Sequence Number: %u\n", ntohl(pinfo.tcph->seq));
-                //     printf("    Acknowledgment Number: %u\n", ntohl(pinfo.tcph->ack_seq));
-                //     printf("    Flags: 0x%02x\n", ((unsigned char *)pinfo.tcph)[13]);
-                //     printf("    Window Size: %u\n", ntohs(pinfo.tcph->window));
-                // } else {
-                //     printf("  TCP Header: Not Present\n");
-                // }
-
-                // // Print UDP header details if present
-                // if (pinfo.udph != NULL) {
-                //     printf("  UDP Header:\n");
-                //     printf("    Source Port: %u\n", ntohs(pinfo.udph->source));
-                //     printf("    Destination Port: %u\n", ntohs(pinfo.udph->dest));
-                //     printf("    Length: %u bytes\n", ntohs(pinfo.udph->len));
-                // } else {
-                //     printf("  UDP Header: Not Present\n");
-                // }
             }
             last_time = packet_time;
 
@@ -236,33 +183,59 @@ int main(int argc, char *argv[]) {
         // Output the summary in the required format
         printf("%s %.6f %.6f %d %d\n", fileName.c_str(), first_time, last_time - first_time, total_pkts, IP_pkts);
     }
+    else if(mode == SIZE_ANALYSIS_MODE){
+        struct pkt_info pinfo;
+        while (next_packet(fd, &pinfo)) {
+            //Ethernet and IPV4 Header Check
+            if(pinfo.ethh == NULL || pinfo.iph == NULL){
+                continue;
+            }
+            //Time Stamp
+            double packet_time = pinfo.now;
 
-    // if (mode == INFORMATION_MODE) {
-    //     double first_time = 0.0, last_time = 0.0;
-    //     int total_pkts = 0, IP_pkts = 0;
+            //Caplen
+            unsigned int caplen = pinfo.caplen; 
 
-    //     struct pkt_info pinfo;
-    //     while (next_packet(fd, &pinfo)) {
-    //         total_pkts++;
+            //IPV4 Packet Length
+            unsigned int ip_len = ntohs(pinfo.iph->tot_len);
 
-    //         // Use the `now` field from `pkt_info`
-    //         double packet_time = pinfo.now;
-    //         if (total_pkts == 1) {
-    //             first_time = packet_time;
-    //         }
-    //         last_time = packet_time;
+            //IPv4 Header Length (in bytes)
+            unsigned int ihl = pinfo.iph->ihl*4;
 
-    //         // Check if the packet is IPv4
-    //         if (pinfo.ethh != NULL && pinfo.ethh->ether_type == ETHERTYPE_IP) {
-    //             IP_pkts++;
-    //         }
-    //     }
+            //Protocol, Protocolheader length and Payload
+            int protocol = pinfo.iph->protocol;
+            char protocolChar;
+            unsigned int trans_hl;
+            unsigned int payload;
+            if(protocol == TCP){
+                protocolChar = 'T';
+                if(pinfo.tcph == NULL){
+                    continue;
+                }
+                trans_hl = pinfo.tcph->doff*4;
+                payload = ip_len - ihl - trans_hl;
+            }
+            else if(protocol == UDP){
+                protocolChar = 'U';
+                trans_hl = UDP_HEADER_LEN;
+                payload = ip_len - ihl - trans_hl;
+            }
+            else{
+                protocolChar = '?';
+                std::cout << std::fixed << std::setprecision(6) << packet_time  << " "<< caplen << " " << ip_len << " " << ihl << " "<< protocolChar << " "<< protocolChar << " "<< protocolChar <<std::endl;
+                continue;
+                
+            }
 
-    //     // Output the summary in the required format
-    //     printf("%s %.6f %.6f %d %d\n", fileName.c_str(), first_time, last_time - first_time, total_pkts, IP_pkts);
-    // }
+            
 
-    // Close the file descriptor
+
+            //Print Row
+            std::cout << std::fixed << std::setprecision(6) << packet_time  << " "<< caplen << " " << ip_len << " " << ihl << " "<< protocolChar << " "<< trans_hl << " " << payload << std::endl;
+
+        }
+    }
+
     close(fd);
 
     return 0;    

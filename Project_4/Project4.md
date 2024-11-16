@@ -2,6 +2,24 @@
 ---
 A `Trace Packet` is a data file that captures network traffic by recording each packet transmitted across a data link.
 
+## Size Mode
+
+`Time Stamp` `Captured Bytes` `IPv4 Packet Length` `IPv4 Header Length` `Protocal` `Protocal Header Length` `Payload Length`
+
+### Payload
+
+#### TCP Payload
+$$
+Payload = Total - (IP Header + TCP Header)
+$$
+
+#### UDP Payload
+$$
+Payload = Total - UDP Header 
+$$
+
+`UDP Header` is always 8. 
+
 ## Running theh Packet Trace Analyzer
 
 `proj4` must be run like this

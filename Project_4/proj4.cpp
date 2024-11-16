@@ -24,6 +24,8 @@ Description: Packet Trace Analyzer
 #include <fstream>
 #include <arpa/inet.h>
 #include <iomanip> 
+#include <map>
+#include <utility> // For std::pair
 
 #define INFORMATION_MODE 1
 #define SIZE_ANALYSIS_MODE 2
@@ -286,6 +288,64 @@ int main(int argc, char *argv[]) {
 
             // Print packet information
             std::cout << std::fixed << std::setprecision(6) << timestamp << " " << src_ip << " " << src_port << " " << dst_ip  << " " << dst_port << " " << ip_ttl << " " << ip_id << " " << syn << " " << window << " " << seqno << std::endl;
+        }
+    }
+    else if (mode == TRAFFIC_MATRIX_MODE) {
+        struct pkt_info pinfo;
+
+        // Data structure to store traffic information
+        std::map<std::pair<std::string, std::string>, std::pair<int, int>> traffic_matrix;
+
+        while (next_packet(fd, &pinfo)) {
+            // Ensure the packet has an Ethernet header
+            if (pinfo.ethh == NULL) {
+                continue; // Skip packets without Ethernet headers
+            }
+
+            // Ensure the packet is IPv4
+            if (pinfo.iph == NULL) {
+                continue; // Skip non-IPv4 packets
+            }
+
+            // Ensure the protocol is TCP
+            if (pinfo.iph->protocol != IPPROTO_TCP) {
+                continue; // Skip non-TCP packets
+            }
+
+            // Ensure the packet has a TCP header
+            if (pinfo.tcph == NULL) {
+                continue; // Skip packets without TCP headers
+            }
+
+            // Extract IP addresses
+            std::string src_ip = inet_ntoa(*(struct in_addr *)&pinfo.iph->saddr);
+            std::string dst_ip = inet_ntoa(*(struct in_addr *)&pinfo.iph->daddr);
+
+            // Extract IPv4 and TCP header lengths
+            unsigned int ip_len = ntohs(pinfo.iph->tot_len);
+            unsigned int ihl = pinfo.iph->ihl * 4; // IPv4 header length
+            unsigned int trans_hl = pinfo.tcph->doff * 4; // TCP header length
+
+            // Calculate payload length
+            int payload_len = ip_len - ihl - trans_hl;
+
+            // Update traffic matrix
+            auto key = std::make_pair(src_ip, dst_ip);
+            if (traffic_matrix.find(key) == traffic_matrix.end()) {
+                // Initialize entry if not present
+                traffic_matrix[key] = std::make_pair(0, 0); // total_pkts, traffic_volume
+            }
+            // Update values
+            traffic_matrix[key].first += 1;           // Increment packet count
+            traffic_matrix[key].second += payload_len; // Add payload length
+        }
+
+        // Print the traffic matrix
+        for (const auto &entry : traffic_matrix) {
+            const auto &key = entry.first;           // src_ip, dst_ip pair
+            const auto &value = entry.second;        // total_pkts, traffic_volume pair
+            std::cout << key.first << " " << key.second << " "
+                    << value.first << " " << value.second << std::endl;
         }
     }
 

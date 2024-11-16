@@ -187,14 +187,20 @@ int main(int argc, char *argv[]) {
         struct pkt_info pinfo;
         while (next_packet(fd, &pinfo)) {
             //Ethernet and IPV4 Header Check
-            if(pinfo.ethh == NULL || pinfo.iph == NULL){
+            if(pinfo.ethh == NULL){
                 continue;
             }
+
             //Time Stamp
             double packet_time = pinfo.now;
 
             //Caplen
             unsigned int caplen = pinfo.caplen; 
+
+            if(pinfo.iph == NULL){
+                std::cout << std::fixed << std::setprecision(6) << packet_time << " " << caplen << " - - - - -" << std::endl; 
+                continue;
+            }
 
             //IPV4 Packet Length
             unsigned int ip_len = ntohs(pinfo.iph->tot_len);

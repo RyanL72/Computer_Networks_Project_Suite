@@ -51,7 +51,7 @@ echo "Execution completed. Output saved to a.out."
 
 # Step 6: Compare output with expected output
 echo "Comparing output with expected output..."
-DIFF_OUTPUT=$(diff -u a.out "$EXPECTED_FILE") # Unified diff format
+DIFF_OUTPUT=$(diff a.out "$EXPECTED_FILE") # Unified diff format
 if [[ -z "$DIFF_OUTPUT" ]]; then
     echo "Output matches expected output." | tee "$DIFFERENCES_FILE"
 else

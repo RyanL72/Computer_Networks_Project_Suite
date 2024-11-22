@@ -1,3 +1,11 @@
+/*
+Author: Ryan Lin
+CaseID: rhl72
+File name: proj4.cpp
+Date: 11-15-2024
+Description: Trace File Analyzer 
+*/
+
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>

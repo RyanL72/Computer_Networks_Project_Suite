@@ -1,0 +1,11 @@
+Timestamp,Server,Region,IP Address,Min RTT,Avg RTT,Max RTT,Packet Loss
+2024-12-02T03:08:43Z,www.utexas.edu,South,23.185.0.4
+84,mdev = 13.531,22.228,53.845,0
+2024-12-02T03:08:47Z,www.unco.edu,Mountain,138.86.97.143
+84,,,,100
+2024-12-02T03:09:02Z,www.stanford.edu,West,146.75.78.133
+84,mdev = 11.885,13.261,15.097,0
+2024-12-02T03:09:06Z,www.uchicago.edu,Midwest,13.107.246.35
+84,,,,100
+2024-12-02T03:09:20Z,www.nyu.edu,Northeast,52.84.125.31
+84,mdev = 11.995,15.218,21.964,0

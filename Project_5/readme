@@ -1,0 +1,15 @@
+## Scripts
+### ping scripts
+```bash
+chmod +x ping_measurement.sh
+```
+```bash
+./ping_measurement.sh
+```
+### traceroute scripts
+```bash
+chmod +x traceroute_measurement.sh
+```
+```bash
+./traceroute_measurement.sh
+```

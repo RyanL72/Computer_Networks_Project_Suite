@@ -4,7 +4,7 @@ import time             # To schedule measurements
 from datetime import datetime   # To timestamp measurements
 import re               # Regular expressions for parsing outputs
 from concurrent.futures import ThreadPoolExecutor, as_completed
-import threading        # For thread synchronization
+import threading        # for thread synchronization
 
 # Define the list of servers for the top 5 universities in each region
 servers = {
@@ -155,7 +155,7 @@ def measure_server(timestamp, region, server):
     # Log the data
     log_data(data)
 
-# Main function to run the measurements
+
 def main():
     # Run the measurements continuously every 5 minutes
     while True:
@@ -181,6 +181,5 @@ def main():
         print("Waiting for 5 minutes before the next measurement...\n")
         time.sleep(300)  # 300 seconds = 5 minutes
 
-# Run the main function
 if __name__ == '__main__':
     main()

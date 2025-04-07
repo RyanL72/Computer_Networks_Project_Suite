@@ -132,9 +132,6 @@ Each project is implemented in C++ and demonstrates key networking concepts with
       ./trace_analyzer -r <TraceFile> -m
       ```
   
-- **Metadata**:
-  - **Author**: Ryan Lin (CaseID: rhl72)
-  - **Date**: November 15, 2024
 
 ---
 

@@ -140,21 +140,5 @@ Each project is implemented in C++ and demonstrates key networking concepts with
 
 ---
 
-## Getting Started
 
-To get started with any project, ensure you have a C++ compiler (such as g++) installed and that your development environment includes the necessary networking and file I/O libraries. Each project is self-contained and can be compiled and executed individually following the usage instructions above.
-
-## Contributing
-
-Contributions are welcome! If you'd like to enhance or extend these projects, please fork the repository and submit pull requests with your changes. When contributing, please follow the coding style already present in the projects.
-
-## License
-
-This project suite is provided under the [MIT License](LICENSE).
-
-## Acknowledgments
-
-This repository was created as part of a computer networks course to promote learning through practical implementation. Special thanks to all who contributed feedback and improvements.
-
----
 

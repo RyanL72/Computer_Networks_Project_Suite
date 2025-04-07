@@ -1,8 +1,6 @@
 # Computer Networks Project Suite
 
-Welcome to the **Computer Networks Project Suite**—a collection of projects designed to reinforce computer networking concepts through hands-on implementation. Each project focuses on a specific topic and builds practical skills in networking, programming, and system design.
-
-# CSDS_325 Computer Networks Fall 2024
+Welcome to the **Computer Networks Project Suite**—a collection of projects designed to reinforce computer networking concepts through hands-on implementation ( CSDS_325 Computer Networks Fall 2024 ). Each project focuses on a specific topic and builds practical skills in networking, programming, and system design.
 
 ## Overview
 
